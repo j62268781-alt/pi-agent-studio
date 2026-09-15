@@ -7,8 +7,9 @@
 // starter screen with a button, or `pi-agent-studio.openInSidebar` is run),
 // so merely opening the container costs nothing.
 
+import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { sep } from "node:path";
+import { join, sep } from "node:path";
 import * as vscode from "vscode";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import type { SessionInfo } from "@earendil-works/pi-coding-agent";
@@ -95,9 +96,10 @@ function getChatHtml(webview: vscode.Webview): string {
  * this only shows for the ~1s the RPC subprocess needs to boot (plus a retry affordance if
  * starting fails). It hands off to the in-webview boot splash (index.html #boot-splash), which
  * stays up until the history has rendered — same π badge and dots on both. */
-function getLoadingHtml(): string {
+function getLoadingHtml(extensionUri: vscode.Uri): string {
   const zh = getLocale() === "zh-cn";
   const nonce = "loader" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const logoSvg = readFileSync(join(extensionUri.fsPath, "assets", "icon.svg"), "utf8");
   return `<!DOCTYPE html>
 <html lang="${zh ? "zh-cn" : "en"}">
 <head>
@@ -113,13 +115,8 @@ body {
   color: var(--vscode-foreground);
   font-family: var(--vscode-font-family); font-size: var(--vscode-font-size);
 }
-.logo {
-  width: 64px; height: 64px; border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--vscode-button-background); color: var(--vscode-button-foreground);
-  font-size: 34px; font-weight: 600; font-style: italic;
-  font-family: Georgia, "Times New Roman", serif; user-select: none;
-}
+.logo { width: 64px; height: 64px; }
+.logo svg { width: 100%; height: 100%; display: block; border-radius: 14px; }
 .dots { display: flex; gap: 7px; }
 .dots span {
   width: 7px; height: 7px; border-radius: 50%;
@@ -144,7 +141,7 @@ body {
 </style>
 </head>
 <body>
-<div class="logo">π</div>
+<div class="logo">${logoSvg}</div>
 <div class="dots" id="dots"><span></span><span></span><span></span></div>
 <div class="hint" id="hint">${zh ? "正在启动会话…" : "Starting session…"}</div>
 <div class="error" id="error">
@@ -279,7 +276,7 @@ export function createChatSidebarViewProvider(
       } as vscode.WebviewOptions & { retainContextWhenHidden?: boolean };
       webviewView.webview.html = sidebarState?.session
         ? getChatHtml(webviewView.webview)
-        : getLoadingHtml();
+        : getLoadingHtml(opts.extensionUri);
 
       const host = makeHost(webviewView);
       currentHost = host;
@@ -309,7 +306,7 @@ export function createChatSidebarViewProvider(
             webviewView.webview.html = getChatHtml(webviewView.webview);
             sidebarState.session.attach(host);
           } else if (sidebarState?.view === webviewView) {
-            webviewView.webview.html = getLoadingHtml();
+            webviewView.webview.html = getLoadingHtml(opts.extensionUri);
           }
         }
       });

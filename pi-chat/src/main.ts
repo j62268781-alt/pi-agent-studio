@@ -1,5 +1,6 @@
 // pi-chat webview entry point
 import codiconTtf from "@vscode/codicons/dist/codicon.ttf?inline";
+import piLogoSvg from "../../assets/icon.svg?raw";
 import "./style.css";
 import { setModelIconFns, vscode } from "./globals";
 import { getModelIcon, modelIconHtml, escHtml } from "./model-icons";
@@ -61,6 +62,8 @@ if (ctxRevert) ctxRevert.textContent = t("Revert here");
 // stuck handshake.
 const splash = document.getElementById("boot-splash");
 let splashGone = false;
+const bootLogo = document.querySelector(".boot-logo");
+if (bootLogo) bootLogo.innerHTML = piLogoSvg;
 function dismissSplash() {
   if (splashGone) return;
   splashGone = true;
