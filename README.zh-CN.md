@@ -51,10 +51,11 @@ pi-subagents 从 `~/.pi/agent/agents/` 发现 agent，因此复制过去即可�
 cp extras/agents/*.md ~/.pi/agent/agents/
 ```
 
-**MCP 同理**，交给外部的 [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter)，不用内置的 `pi-mcp`：
+**MCP 同理**，交给外部的 [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter)，不用内置的 `pi-mcp`。本 fork
+**把内置 MCP 彻底移除了**（`pi-mcp/` 源码、`bridge/mcp/` 构建产物与 `pi-agent-studio.mcp.*` 设置）—— 上游本来默认就是关的（`mcp.enabled: false`），没有任何东西依赖它：
 
-- `pi-agent-studio.mcp.enabled` 默认为 `false`，内置扩展根本不会被注入
-  （否则它会注册 `mcp_tool_search` / `mcp_tool_call` 两个永远搜不到东西的工具——因为它自己的配置是空的）
+- 内置扩展已删除，随之消失的还有它会无条件注册的 `mcp_tool_search` / `mcp_tool_call` 两个工具
+  （它们永远搜不到东西——因为其配置本来就是空的）
 - 本 fork 把 **设置 → MCP Servers** 面板指向 adapter 的配置（`~/.agents/mcp.json`，项目级为
   `<项目>/.mcp.json`），这样表单编辑的就是 adapter 真正读取的文件
 - `updateServer()` 采用 **merge** 而非整体替换，因此 adapter 特有字段（`auth`、`oauth`、

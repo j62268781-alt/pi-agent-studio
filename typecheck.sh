@@ -4,11 +4,9 @@
 # Bridge files import types from the pi packages this project declares as
 # dependencies (`@earendil-works/pi-coding-agent`, `pi-ai`, `pi-tui`,
 # `pi-agent-core`, `typebox`). There is no local package.json for bridge/, so
-# the committed `tsconfig.bridge.json` resolves the sub-packages that are not
-# hoisted to the root `node_modules` (pi-tui, pi-agent-core, typebox) via
-# `paths` to `pi-mcp/node_modules` — pi-mcp declares the same pi versions as
-# devDependencies. `pi-coding-agent` / `pi-ai` resolve from the root
-# `node_modules` normally (including the `pi-ai/compat` subpath).
+# the committed `tsconfig.bridge.json` relies on all of them resolving from the
+# root `node_modules` — the root package.json declares every one of them
+# (including the `pi-ai/compat` subpath).
 #
 # Uses tsgo (the same TypeScript native preview compiler as `pnpm typecheck`):
 # no `npx`, no globally installed `tsc`, no `npm root -g` needed.

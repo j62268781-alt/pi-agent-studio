@@ -56,11 +56,13 @@ cp extras/agents/*.md ~/.pi/agent/agents/
 ```
 
 **MCP** is delegated the same way — to the external
-[pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter), not the bundled `pi-mcp`:
+[pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter), not the bundled `pi-mcp`. This
+fork **removes the bundled MCP entirely** (`pi-mcp/` source, `bridge/mcp/` output, and the
+`pi-agent-studio.mcp.*` settings) — upstream had it off by default (`mcp.enabled: false`), so
+nothing depended on it:
 
-- `pi-agent-studio.mcp.enabled` defaults to `false`, so the bundled extension is never injected
-  (it would otherwise register two `mcp_tool_search` / `mcp_tool_call` tools that can never find
-  anything, since its own config is empty)
+- the bundled extension is gone, and with it the two `mcp_tool_search` / `mcp_tool_call` tools it
+  would register unconditionally (they could never find anything — its own config was empty)
 - This fork repoints the **Settings → MCP Servers** panel at the adapter's config
   (`~/.agents/mcp.json`, or `<project>/.mcp.json`) so the form edits the file the adapter actually reads
 - `updateServer()` **merges** rather than replaces, so adapter-only fields (`auth`, `oauth`,

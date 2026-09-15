@@ -18,8 +18,6 @@ interface ServerData {
     source: "user" | "project";
   }>;
   hasWorkspace: boolean;
-  mcpEnabled: boolean;
-  mcpIdleTimeout: number;
 }
 
 interface McpForm {
@@ -73,16 +71,6 @@ export function renderMcpTab(parent: HTMLElement, data: ServerData) {
       <button class="btn-primary" data-action="add-server"><span class="codicon codicon-add"></span> ${t("Add Server")}</button>
       <button class="btn-secondary" data-action="open-mcp-json" data-scope="user" title="${t("Open user mcp.json")}"><span class="codicon codicon-go-to-file"></span> ${t("user mcp.json")}</button>
       ${hasWorkspace ? `<button class="btn-secondary" data-action="open-mcp-json" data-scope="project" title="${t("Open project mcp.json")}"><span class="codicon codicon-go-to-file"></span> ${t("project mcp.json")}</button>` : ""}
-    </div>
-  </div>
-  <div class="editor-card mcp-cfg">
-    <div class="mcp-cfg-row">
-      <label class="check-label"><input type="checkbox" id="mcp-enabled" ${data.mcpEnabled ? "checked" : ""} /> ${t("Enable MCP tools")}</label>
-      <div class="mcp-cfg-field">
-        <label class="field-label">${t("Idle timeout (minutes)")}</label>
-        <input id="mcp-idle" type="number" min="0" value="${data.mcpIdleTimeout ?? 10}" title="${t("Minutes before idle MCP servers disconnect. 0 disables idle disconnect.")}" />
-      </div>
-      <button class="btn-primary" data-action="save-mcp-config"><span class="codicon codicon-save"></span> ${t("Save")}</button>
     </div>
   </div>
   <div class="item-list">${rows || `<span class="dim">${t("No servers configured.")}</span>`}</div>
@@ -207,22 +195,6 @@ export function renderMcpTab(parent: HTMLElement, data: ServerData) {
           scope: btn.getAttribute("data-scope") ?? "user",
         });
         break;
-      case "save-mcp-config": {
-        const enabled =
-          (document.getElementById("mcp-enabled") as HTMLInputElement)?.checked ?? false;
-        const idleEl = document.getElementById("mcp-idle") as HTMLInputElement | null;
-        const idle = idleEl ? Number(idleEl.value) : 10;
-        if (idleEl && idleEl.value.trim() === "") {
-          showError(parent, t("Idle timeout must be a number"));
-          return;
-        }
-        vscode.postMessage({
-          type: "saveMcpConfig",
-          enabled,
-          idleTimeout: Number.isNaN(idle) ? 10 : idle,
-        });
-        break;
-      }
       case "save-mcp": {
         const form = readForm();
         if (!form.name.trim()) {

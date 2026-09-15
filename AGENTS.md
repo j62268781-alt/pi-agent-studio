@@ -98,7 +98,7 @@ Each entry names the file and the reason, so a merge conflict is a two-line deci
 - **These two values must stay in sync.** The CSS `min-height` wins over the inline `height`
   that `autoGrow()` sets, so a mismatch is silent — it still renders correctly, but reads as a bug.
 
-### 7. MCP config panel points at `pi-mcp-adapter`
+### 7. MCP config panel points at `pi-mcp-adapter`; bundled MCP removed entirely
 
 - `src/mcp/mcp-config.ts` → `getMcpUserPath()` returns `~/.agents/mcp.json` (was
   `<agentDir>/mcp.json`); `getMcpProjectPath()` returns `<folder>/.mcp.json` (was
@@ -106,12 +106,14 @@ Each entry names the file and the reason, so a merge conflict is a two-line deci
   replacing the whole entry.
 - `src/chat/chat-session.ts` → the `mcpOpen` case no longer gates on
   `pi-agent-studio.mcp.enabled` before sending `/mcp status`.
-- **Why**: MCP is served by the external `pi-mcp-adapter`, never by the bundled `pi-mcp`
-  (`mcp.enabled` defaults to `false`, so the bundled extension is not even injected). But the
-  Settings panel and the chat drawer still read/wrote the **bundled** extension's config path, so
-  anything configured there silently had no effect — and `mcpOpen` claimed "MCP is disabled"
-  while the adapter was running fine. `/mcp status` and `/mcp <action> <server>` are adapter
-  syntax, so the chat side now passes straight through.
+- `pi-mcp/`, `bridge/mcp/`, `MCP_EXTENSION_PATH`, `mcpExtensionArgs()`, the
+  `pi-agent-studio.mcp.*` settings and their nls strings are **deleted**.
+- **Why**: MCP is served by the external `pi-mcp-adapter`, never by the bundled `pi-mcp`. The
+  bundled extension was already dead (never injected at `mcp.enabled=false`), but its config
+  path was still wired into the Settings panel and the chat drawer — anything configured there
+  silently had no effect, and `mcpOpen` claimed "MCP is disabled" while the adapter was running
+  fine. `/mcp status` and `/mcp <action> <server>` are adapter syntax, so the chat side now
+  passes straight through.
 - **Merge vs replace is load-bearing**: adapter entries carry fields the panel's form does not
   model (`auth`, `oauth`, `protocolVersion`, `includeTools`). A wholesale replace dropped them on
   every edit.
@@ -129,25 +131,26 @@ Each entry names the file and the reason, so a merge conflict is a two-line deci
 
 Keeping these means the upstream diff stays small; none of them execute any more.
 
-- `bridge/subagent/**` (index.ts / agents.ts / README) and `bridge/agents/**` (explore.md /
-  general.md) — still packed by `.vscodeignore`'s `!bridge/**`, but `disabledTools` keeps the
-  extension from registering, so nothing loads them. `bridge/agents/*.md` is kept as the source
-  the user-level definitions were derived from.
-- `src/constants.ts` → `SUBAGENT_EXTENSION_PATH` / `BUILTIN_AGENTS_DIR`, and the matching
-  `-e` / `PI_VSCODE_BUILTIN_AGENTS_DIR` injection in `src/pi.ts` (`:159`, `:203`, `:223`).
-  The env var now has no consumer; the `-e` path still loads the extension, which is what makes
-  the `disabledTools` gate effective.
+- `bridge/subagent/**` (index.ts / agents.ts / README) — still packed by `.vscodeignore`'s
+  `!bridge/**`, but `disabledTools` keeps the extension from registering, so nothing loads it.
+  The `-e` injection in `src/pi.ts` (`createPiShellArgs` / `createRpcShellArgs`) is **required**:
+  it is what loads the extension so the `disabledTools` gate can take effect — deleting the
+  files without removing the injection makes pi exit 1 ("Extension path does not exist").
+- `bridge/agents/*.md` — reference copies; the live definitions are `extras/agents/*.md` and
+  `~/.pi/agent/agents/`. Nothing reads `bridge/agents/` any more (`getBuiltinAgentsDir()` was
+  retired, and `PI_VSCODE_BUILTIN_AGENTS_DIR` from `src/pi.ts` has no consumer).
+- `src/constants.ts` → `SUBAGENT_EXTENSION_PATH` / `BUILTIN_AGENTS_DIR`.
 - `pi-chat`'s `subagent` rendering (`messages.ts`, `style.css`, `globals.ts`) — **shared, not
   ours**: pi-subagents returns results under the same `subagent` tool name, so this code renders
   its output too. It must stay.
 
 ## Build & Run
 
-- pnpm workspace: root `pnpm-workspace.yaml` declares `pi-chat`, **`pi-mcp`** and **`pi-settings`** as members; **single root `pnpm-lock.yaml`** (no lockfile/workspace file inside `pi-chat/`, `pi-mcp/` or `pi-settings/`). Builds use `pnpm --filter <pkg> ...` (e.g. `build`), not `--dir`. `onlyBuiltDependencies: [esbuild]` lives in the root `pnpm-workspace.yaml`.
-- `pnpm build` — `pnpm --filter pi-chat build` (vite + model-icons extract) **then** `pnpm --filter pi-mcp build` (rolldown → `bridge/mcp/index.js`) **then** `pnpm --filter pi-settings build` (vite singlefile → `src/settings/settings-dist.html`) **then** `rolldown -c rolldown.config.ts` (code splitting: `dist/extension.cjs` ~24 KB main entry + `dist/chunks/*.cjs` lazy-loaded via `await import()` on first use; `.vscodeignore` whitelists only `dist/chunks/**/*.cjs`, excluding `*.map`). `pnpm dev` watches **only** the rolldown bundle; pi-chat/pi-mcp/pi-settings source changes are NOT picked up — run the relevant `pnpm --filter <pkg> build` separately.
-- `pnpm fmt` (auto-fix) / `pnpm lint` / `pnpm typecheck` — oxlint + oxfmt, oxfmt --check, and `tsgo` (TypeScript Native Preview, NOT `tsc`). The `pi-mcp`, `pi-chat` and `pi-settings` subpackages each have their own `tsc --noEmit` typecheck (`pnpm --filter pi-mcp typecheck`, `pnpm --filter pi-chat typecheck`, `pnpm --filter pi-settings typecheck`); bridge TS is covered by `tsconfig.bridge.json`, run as part of `pnpm typecheck` (see below).
+- pnpm workspace: root `pnpm-workspace.yaml` declares `pi-chat` and **`pi-settings`** as members; **single root `pnpm-lock.yaml`** (no lockfile/workspace file inside `pi-chat/` or `pi-settings/`). Builds use `pnpm --filter <pkg> ...` (e.g. `build`), not `--dir`. `onlyBuiltDependencies: [esbuild]` lives in the root `pnpm-workspace.yaml`.
+- `pnpm build` — `pnpm --filter pi-chat build` (vite + model-icons extract) **then** `pnpm --filter pi-settings build` (vite singlefile → `src/settings/settings-dist.html`) **then** `rolldown -c rolldown.config.ts` (code splitting: `dist/extension.cjs` main entry + `dist/chunks/*.cjs` lazy-loaded via `await import()` on first use; `.vscodeignore` whitelists only `dist/chunks/**/*.cjs`, excluding `*.map`). `pnpm dev` watches **only** the rolldown bundle; pi-chat/pi-settings source changes are NOT picked up — run the relevant `pnpm --filter <pkg> build` separately.
+- `pnpm fmt` (auto-fix) / `pnpm lint` / `pnpm typecheck` — oxlint + oxfmt, oxfmt --check, and `tsgo` (TypeScript Native Preview, NOT `tsc`). The `pi-chat` and `pi-settings` subpackages each have their own `tsc --noEmit` typecheck (`pnpm --filter pi-chat typecheck`, `pnpm --filter pi-settings typecheck`); bridge TS is covered by `tsconfig.bridge.json`, run as part of `pnpm typecheck` (see below).
 - `pnpm test` — runs `lint && typecheck` only. **`vitest` is not wired in**; run directly: `pnpm vitest run` or a single file: `pnpm vitest run test/resolve.test.ts`.
-- Bridge extensions (`bridge/**/*.ts`) are covered by `pnpm typecheck` via the committed `tsconfig.bridge.json` (`./typecheck.sh [bridge/foo.ts]` for single-file iteration). The config resolves `@earendil-works/pi-tui` / `pi-agent-core` / `typebox` through `paths` to `pi-mcp/node_modules` (pi-mcp declares the same pi versions as devDependencies); `pi-coding-agent` / `pi-ai` (incl. the `pi-ai/compat` subpath) resolve from the root `node_modules` normally. No `npm root -g`, no `npx tsc`, no generated throwaway tsconfig. See `pi-extension-typecheck.md`.
+- Bridge extensions (`bridge/**/*.ts`) are covered by `pnpm typecheck` via the committed `tsconfig.bridge.json` (`./typecheck.sh [bridge/foo.ts]` for single-file iteration). `pi-tui` / `pi-agent-core` / `typebox` / `pi-coding-agent` / `pi-ai` (incl. the `pi-ai/compat` subpath) all resolve from the root `node_modules` — the root package.json declares them. No `npm root -g`, no `npx tsc`, no generated throwaway tsconfig. See `pi-extension-typecheck.md`.
 - `pnpm package` (builds + `vsce package --no-dependencies`), `pnpm install-local` (package + install `.vsix` into local VS Code).
 - `pnpm release [major|minor|patch]` — bumps `package.json`, packages, commits, tags, pushes (CI publishes). Add `--local` to publish via `vsce`/`ovsx` from the dev machine.
 - Always run `pnpm fmt` **and** `pnpm typecheck` before finalizing changes.
@@ -158,7 +161,7 @@ Three cooperating pieces, no framework:
 
 1. **VS Code extension host** (`src/extension.ts` → `dist/extension.cjs`) — Activates `onStartupFinished`, registers commands/views/status bar, owns the local bridge lifecycle.
 2. **Local HTTP bridge** (`src/bridge/*`) — `createBridge` boots a localhost server with a per-session auth token. URL+token are injected as `PI_VSCODE_BRIDGE_URL` / `PI_VSCODE_BRIDGE_TOKEN` env vars into every pi launch, alongside a per-terminal `PI_VSCODE_TERMINAL_ID`. Handlers serve RPC calls for editor state, diagnostics, symbols, definitions, hovers, references, code actions, formatting, and workspace edits. The endpoint is configurable via `pi-agent-studio.bridgeSocket` (`src/bridge/endpoint.ts` + `bind.ts`): empty = random port (default), a number = fixed TCP port (falls back to random + warning when busy), anything else = Unix socket path / Windows named pipe with `{windowId}` substitution (stale-socket unlink retry; `0600` perms). Changes hot-restart the bridge and offer a "Restart Pi Terminals" action (`sessions.restartAll`); already-running pi processes keep the old endpoint until recreated (env is frozen at spawn).
-3. **Bundled pi extensions** — **eight**, loaded via repeated `--extension` (paths in `src/constants.ts`): `pi-vscode-bridge.js` (vscode\_\* tools + TUI footer status), `todo.ts`, `questionnaire.ts`, `subagent/index.ts` (spawns separate `pi` processes per invocation, JSON mode; max 8 parallel/4 concurrent), `btw.ts` (`/btw` quick-question command, not an LLM tool), `permission-gate.ts`, `rewind-code.ts`, `mcp/index.js` (MCP servers bridge — tools/resources/prompts; see below).
+3. **Bundled pi extensions** — **seven** (upstream had eight; this fork removed the bundled MCP), loaded via repeated `--extension` (paths in `src/constants.ts`): `pi-vscode-bridge.js` (vscode\_\* tools + TUI footer status), `todo.ts`, `questionnaire.ts`, `subagent/index.ts` (**disabled by default** via `disabledTools`; spawns separate `pi` processes per invocation, JSON mode), `btw.ts` (`/btw` quick-question command, not an LLM tool), `permission-gate.ts`, `rewind-code.ts`.
 
 Terminal launch flow (`src/terminal.ts` + `src/pi.ts`):
 
@@ -224,7 +227,7 @@ Three independent mechanisms, all keyed by **source string as key** (`t("Open Pi
 2. **Extension host runtime** — `src/i18n.ts`: `t()`/`getLocale()`/`getWebviewI18n()`. Bundles are `l10n/bundle.l10n.json` (en, empty) + `l10n/bundle.l10n.zh-cn.json`, imported with `with { type: "json" }` import attributes (rolldown splits them into a sync-required `dist/chunks/i18n-*.cjs` chunk; `.vscodeignore` whitelists `l10n/**` + `package.nls*.json`). Locale = `auto` follows `vscode.env.language` (zh-cn/zh-hans → zh-cn), else explicit `en`/`zh-cn`. Changing the setting **reloads** open webviews (chat panels lose unsent drafts — accepted tradeoff); status bar tooltip refreshes in place.
 3. **Webviews** — extension-host sidebars (sessions/settings) pre-translate static HTML via host `t()` and inject `window.__I18N__ = {lang, bundle}` + a client `t()` (supports `{0}`) for dynamic strings; Vite subprojects (`pi-chat/`, `pi-settings/`) each have their own `src/i18n.ts` + `src/locales/zh-cn.json` (JSON import, `resolveJsonModule` on in both tsconfigs), language injected by the host via `PI_LANG_PLACEHOLDER` replacement in `index.html` (`window.__PI_LANG__`), not via postMessage.
 
-Not translated (kept English): bridge extensions (`bridge/**/*.ts`), `pi-mcp/`, LLM tool descriptions, `BRIDGE_BOOTSTRAP_PROMPT`, `pi-agent-studio.commitLanguage` (orthogonal), technical enum values (`stdio`/`http`/`sse`/`off`/`minimal`/`auto`), config keys, env var names, paths, placeholder example values.
+Not translated (kept English): bridge extensions (`bridge/**/*.ts`), LLM tool descriptions, `BRIDGE_BOOTSTRAP_PROMPT`, `pi-agent-studio.commitLanguage` (orthogonal), technical enum values (`stdio`/`http`/`sse`/`off`/`minimal`/`auto`), config keys, env var names, paths, placeholder example values.
 
 ## Critical Patterns
 
