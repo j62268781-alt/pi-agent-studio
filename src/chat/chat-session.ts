@@ -6,6 +6,7 @@ import { statSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import * as vscode from "vscode";
+import { SessionManager } from "@earendil-works/pi-coding-agent";
 import type { BridgeConfig } from "../bridge/types.ts";
 import { createRpcEnvironment, createRpcShellArgs, ensurePiBinary } from "../pi.ts";
 import { getGitBranch } from "../gitCommit/gitUtils.ts";
@@ -840,6 +841,49 @@ export async function createChatSession(
       case "reload":
         void reloadSession();
         break;
+      case "listSessions": {
+        // Fork change: feed the chat header's session-list popup with the sessions recorded
+        // for this workspace, newest first.
+        void (async () => {
+          let items: {
+            file: string;
+            name: string;
+            firstMessage: string;
+            modified: string;
+            messageCount: number;
+          }[] = [];
+          try {
+            const list = cwd ? await SessionManager.list(cwd) : [];
+            list.sort(function (a, b) {
+              return (b.modified?.getTime() ?? 0) - (a.modified?.getTime() ?? 0);
+            });
+            items = list.slice(0, 30).map(function (s) {
+              return {
+                file: s.path,
+                name: s.name ?? "",
+                firstMessage: s.firstMessage ?? "",
+                modified:
+                  s.modified instanceof Date ? s.modified.toISOString() : String(s.modified ?? ""),
+                messageCount: s.messageCount ?? 0,
+              };
+            });
+          } catch {
+            // leave items empty; the popup shows its empty state
+          }
+          if (!sessionDisposed)
+            host.postMessage({
+              type: "sessionsList",
+              sessions: items,
+              currentFile: currentSessionFile ?? null,
+            });
+        })();
+        break;
+      }
+      case "switchSession": {
+        const file = String(msg.file ?? "");
+        if (file && file !== currentSessionFile) void switchTo(file);
+        break;
+      }
       case "todoClear":
         void rpc.prompt("/todo-clear", streaming ? "steer" : undefined).catch(() => {});
         break;

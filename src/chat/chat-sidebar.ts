@@ -10,6 +10,8 @@
 import { homedir } from "node:os";
 import { sep } from "node:path";
 import * as vscode from "vscode";
+import { SessionManager } from "@earendil-works/pi-coding-agent";
+import type { SessionInfo } from "@earendil-works/pi-coding-agent";
 import type { BridgeConfig } from "../bridge/types.ts";
 import { getLocale, t } from "../i18n.ts";
 import { getChatWebviewHtml, resolveChatBackground } from "./chat-webview.ts";
@@ -145,6 +147,29 @@ function makeHost(webviewView: vscode.WebviewView): ChatHost {
   return host;
 }
 
+/** Resolve which session file the sidebar chat should bootstrap with.
+ * Command-supplied `sessionFile` wins; `newSession` means start clean; otherwise resume the
+ * most recently modified session recorded for the workspace so reopening the chat lands where
+ * the last conversation left off. */
+async function resolveInitialSessionFile(opts: SidebarChatOptions): Promise<string | undefined> {
+  if (opts.sessionFile) return opts.sessionFile;
+  if (opts.newSession) return undefined;
+  const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!cwd) return undefined;
+  try {
+    const sessions = await SessionManager.list(cwd);
+    let latest: SessionInfo | undefined;
+    for (const s of sessions) {
+      const t = s.modified instanceof Date ? s.modified.getTime() : 0;
+      const best = latest?.modified instanceof Date ? latest.modified.getTime() : 0;
+      if (!latest || t > best) latest = s;
+    }
+    return latest?.path;
+  } catch {
+    return undefined;
+  }
+}
+
 function ensureSidebarSession(opts: SidebarChatOptions): Promise<ChatSession | undefined> {
   if (sidebarState?.session) return Promise.resolve(sidebarState.session);
   pendingSession ??= (async () => {
@@ -224,6 +249,19 @@ export function createChatSidebarViewProvider(
 
       if (sidebarState.session) {
         sidebarState.session.attach(host);
+      } else {
+        // Fork change: auto-start on first open — no manual "Start Chat" click needed. The
+        // most recent session of the workspace is resumed so the history is right there; the
+        // starter screen stays up only for the ~1s the RPC subprocess needs to boot (and as a
+        // manual fallback if starting fails).
+        void (async () => {
+          const sessionFile = await resolveInitialSessionFile(opts);
+          await startSidebarSession(
+            webviewView,
+            host,
+            sessionFile ? { ...opts, sessionFile } : opts,
+          );
+        })();
       }
 
       webviewView.onDidDispose(() => {

@@ -36,6 +36,11 @@ import {
   permissionTitle,
   permissionList,
   permissionIcon,
+  sessionsWrap,
+  sessionsBtn,
+  sessionsPopup,
+  sessionsTitle,
+  sessionsList,
   sessionInfoEl,
   acEl,
   overlayEl,
@@ -592,6 +597,128 @@ function renderPermission() {
   applyPermissionMode(permissionMode);
   if (permissionPopupOpen) renderPermissionList();
 }
+
+// ---- sessions popup (chat header) ----
+interface SessionItem {
+  file: string;
+  name: string;
+  firstMessage: string;
+  modified: string;
+  messageCount: number;
+}
+
+let sessionsPopupOpen = false;
+let sessionsItems: SessionItem[] = [];
+let sessionsCurrentFile: string | null = null;
+
+function formatSessionTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const now = new Date();
+  if (d.toDateString() === now.toDateString())
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString([], { month: "2-digit", day: "2-digit" });
+}
+
+function sessionItemTitle(s: SessionItem): string {
+  if (s.name) return s.name;
+  const first = s.firstMessage.trim().replace(/\s+/g, " ");
+  if (first) return first.length > 80 ? first.slice(0, 80) + "…" : first;
+  const file = s.file.split("/").pop() || s.file;
+  return file;
+}
+
+function renderSessionsList() {
+  sessionsList.innerHTML = "";
+  if (!sessionsItems.length) {
+    const empty = el("div", "sessions-empty");
+    empty.textContent = t("No sessions yet.");
+    sessionsList.appendChild(empty);
+    return;
+  }
+  for (const s of sessionsItems) {
+    const selected = !!sessionsCurrentFile && s.file === sessionsCurrentFile;
+    const item = el("button", "session-item" + (selected ? " selected" : ""));
+    item.type = "button";
+    item.setAttribute("data-file", s.file);
+    const text = el("span", "session-item-text");
+    const title = el("span", "session-item-title");
+    title.textContent = sessionItemTitle(s);
+    const meta = el("span", "session-item-meta");
+    const parts = [formatSessionTime(s.modified)];
+    if (s.messageCount) parts.push(s.messageCount + " " + t("messages"));
+    meta.textContent = parts.filter(Boolean).join(" · ");
+    text.appendChild(title);
+    text.appendChild(meta);
+    item.appendChild(text);
+    if (selected) {
+      const check = el("span", "session-item-check");
+      check.innerHTML = ICON_CHECK;
+      item.appendChild(check);
+    }
+    item.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      closeSessionsPopup();
+      vscode.postMessage({ type: "switchSession", file: s.file });
+    });
+    sessionsList.appendChild(item);
+  }
+}
+
+function positionSessionsPopup() {
+  const r = sessionsWrap.getBoundingClientRect();
+  sessionsPopup.style.minWidth = Math.max(300, r.width) + "px";
+  sessionsPopup.style.left = "";
+  sessionsPopup.style.right = "";
+  const pw = sessionsPopup.offsetWidth;
+  const margin = 8;
+  if (r.left + pw > window.innerWidth - margin) {
+    let left = r.width - pw;
+    if (r.left + left < margin) left = -(r.left - margin);
+    sessionsPopup.style.left = left + "px";
+  }
+  const ph = sessionsPopup.offsetHeight || 260;
+  const spaceBelow = window.innerHeight - r.bottom;
+  if (spaceBelow < ph + 8 && r.top > spaceBelow) {
+    sessionsPopup.style.bottom = r.height + "px";
+    sessionsPopup.style.top = "";
+  } else {
+    sessionsPopup.style.top = r.height + "px";
+    sessionsPopup.style.bottom = "";
+  }
+}
+
+function openSessionsPopup() {
+  if (sessionsPopupOpen) return;
+  sessionsPopupOpen = true;
+  sessionsTitle.textContent = t("Sessions");
+  renderSessionsList();
+  sessionsPopup.style.display = "block";
+  positionSessionsPopup();
+  sessionsWrap.classList.add("is-open");
+  document.addEventListener("mousedown", onSessionsPopupOutside);
+  vscode.postMessage({ type: "listSessions" });
+}
+
+function closeSessionsPopup() {
+  if (!sessionsPopupOpen) return;
+  sessionsPopupOpen = false;
+  sessionsPopup.style.display = "none";
+  sessionsWrap.classList.remove("is-open");
+  document.removeEventListener("mousedown", onSessionsPopupOutside);
+}
+
+function onSessionsPopupOutside(ev: MouseEvent) {
+  const target = ev.target as HTMLElement;
+  if (target && (target === sessionsWrap || sessionsWrap.contains(target))) return;
+  closeSessionsPopup();
+}
+
+sessionsBtn.addEventListener("click", function (ev) {
+  ev.stopPropagation();
+  if (sessionsPopupOpen) closeSessionsPopup();
+  else openSessionsPopup();
+});
 
 function applyState(s: any) {
   if (!s) return;
@@ -1811,6 +1938,11 @@ window.addEventListener("message", function (e: MessageEvent) {
       break;
     case "permissionMode":
       renderPermission();
+      break;
+    case "sessionsList":
+      sessionsItems = Array.isArray(d.sessions) ? d.sessions : [];
+      sessionsCurrentFile = typeof d.currentFile === "string" ? d.currentFile : null;
+      if (sessionsPopupOpen) renderSessionsList();
       break;
     case "sendShortcut":
       setSendShortcut(d.value);

@@ -157,5 +157,8 @@
   "Full access": "完全访问",
   "Run commands and edit files without asking": "不受限制地执行命令和修改文件",
   "Other": "其他",
+  "Sessions": "会话",
+  "No sessions yet.": "暂无会话。",
+  "messages": "条消息",
   "yours": "你的"
 }
