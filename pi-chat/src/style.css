@@ -222,14 +222,14 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   color: var(--vscode-button-background);
 }
 .ctx-ring svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   transform: rotate(-90deg);
   display: block;
 }
@@ -1087,7 +1087,7 @@ body {
 .msg {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   max-width: 100%;
   flex-shrink: 0;
 }
@@ -1975,14 +1975,14 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
   font-weight: 700;
 }
 
-/* Fork change: 28px read as cramped in the narrow sidebar composer. 40px brings it in
-   line with the surrounding controls. Keep in sync with the floor in composer.ts autoGrow(). */
+/* Fork change: keep the floor in sync with the one in composer.ts autoGrow(). 36px reads as
+   one comfortable line + padding; anything taller just leaves a hollow gap above the toolbar. */
 #input {
   width: 100%;
   display: block;
-  min-height: 40px;
+  min-height: 36px;
   max-height: 200px;
-  padding: 10px 10px 4px;
+  padding: 8px 10px 6px;
   background: transparent;
   color: var(--vscode-input-foreground);
   border: none;

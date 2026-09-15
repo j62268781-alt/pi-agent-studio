@@ -1063,7 +1063,7 @@ function sendPrompt(behavior?: string) {
 function autoGrow() {
   inputEl.style.height = "auto";
   // Fork change: keep this floor in sync with `#input`'s min-height in style.css.
-  const h = Math.max(40, Math.min(inputEl.scrollHeight, 200));
+  const h = Math.max(36, Math.min(inputEl.scrollHeight, 200));
   inputEl.style.height = h + "px";
   inputEl.style.overflowY = h >= 200 ? "auto" : "hidden";
 }

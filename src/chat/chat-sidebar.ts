@@ -91,41 +91,86 @@ function getChatHtml(webview: vscode.Webview): string {
   );
 }
 
-function getStarterHtml(): string {
+/** Fork change: the old "Start Chat" page is now a loading screen. The session auto-starts, so
+ * this only shows for the ~1s the RPC subprocess needs to boot (plus a retry affordance if
+ * starting fails). */
+function getLoadingHtml(
+  webview: vscode.Webview,
+  extensionUri: vscode.Uri,
+  failed?: { message: string },
+): string {
   const zh = getLocale() === "zh-cn";
-  const nonce = "starter" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const nonce = "loader" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const dark =
+    vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ||
+    vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast;
+  const logo = webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri, "assets", dark ? "logo.svg" : "logo-light.svg"),
+  );
   return `<!DOCTYPE html>
 <html lang="${zh ? "zh-cn" : "en"}">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';" />
 <style>
 html, body { height: 100%; }
 body {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 12px; margin: 0; padding: 24px; box-sizing: border-box;
+  gap: 18px; margin: 0; padding: 24px; box-sizing: border-box;
   background: var(--vscode-sideBar-background);
   color: var(--vscode-foreground);
   font-family: var(--vscode-font-family); font-size: var(--vscode-font-size);
 }
-.title { font-size: 15px; font-weight: 600; }
-.hint { font-size: 12px; color: var(--vscode-descriptionForeground); text-align: center; line-height: 1.6; }
-button {
-  padding: 6px 16px; margin-top: 4px;
-  background: var(--vscode-button-background); color: var(--vscode-button-foreground);
-  border: none; border-radius: 2px; cursor: pointer; font-family: inherit; font-size: 13px;
+.logo { width: 64px; height: 64px; }
+.dots { display: flex; gap: 7px; }
+.dots span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--vscode-descriptionForeground);
+  animation: pi-dot 1.2s infinite ease-in-out;
 }
-button:hover { background: var(--vscode-button-hoverBackground); }
+.dots span:nth-child(2) { animation-delay: 0.15s; }
+.dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes pi-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-5px); }
+}
+.hint { font-size: 12px; color: var(--vscode-descriptionForeground); }
+.error { display: none; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.error .msg { font-size: 12px; color: var(--vscode-errorForeground); max-width: 360px; line-height: 1.5; }
+.error button {
+  padding: 5px 14px;
+  background: var(--vscode-button-background); color: var(--vscode-button-foreground);
+  border: none; border-radius: 2px; cursor: pointer; font-family: inherit; font-size: 12px;
+}
+.error button:hover { background: var(--vscode-button-hoverBackground); }
 </style>
 </head>
 <body>
-<div class="title">Pi Chat</div>
-<div class="hint">${zh ? "点击开始，Pi 将在后台启动一个会话。" : "Start a session to chat with Pi."}</div>
-<button id="start">${zh ? "开始聊天" : "Start Chat"}</button>
+<img class="logo" src="${logo}" alt="pi" />
+<div class="dots" id="dots"><span></span><span></span><span></span></div>
+<div class="hint" id="hint">${zh ? "正在启动会话…" : "Starting session…"}</div>
+<div class="error" id="error">
+  <div class="msg" id="error-msg"></div>
+  <button id="retry">${zh ? "重试" : "Retry"}</button>
+</div>
 <script nonce="${nonce}">
 const vscode = acquireVsCodeApi();
-document.getElementById("start").addEventListener("click", () => vscode.postMessage({ type: "startSession" }));
+document.getElementById("retry").addEventListener("click", () => {
+  document.getElementById("error").style.display = "none";
+  document.getElementById("dots").style.display = "flex";
+  document.getElementById("hint").style.display = "block";
+  vscode.postMessage({ type: "startSession" });
+});
+window.addEventListener("message", (ev) => {
+  const d = ev.data;
+  if (d && d.type === "sessionFailed") {
+    document.getElementById("dots").style.display = "none";
+    document.getElementById("hint").style.display = "none";
+    document.getElementById("error-msg").textContent = d.message || "Failed to start session.";
+    document.getElementById("error").style.display = "flex";
+  }
+});
 </script>
 </body>
 </html>`;
@@ -175,17 +220,21 @@ function ensureSidebarSession(opts: SidebarChatOptions): Promise<ChatSession | u
   pendingSession ??= (async () => {
     const host = currentHost;
     if (!host) return undefined;
-    const session = await createChatSession({
-      extensionUri: opts.extensionUri,
-      bridgeConfig: opts.bridgeConfig,
-      sessionFile: opts.sessionFile,
-      cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
-      traceTag: "sidebar",
-      host,
-    });
-    if (session) sidebarState = { ...sidebarState, session };
-    pendingSession = undefined;
-    return session;
+    try {
+      const session = await createChatSession({
+        extensionUri: opts.extensionUri,
+        bridgeConfig: opts.bridgeConfig,
+        sessionFile: opts.sessionFile,
+        cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+        traceTag: "sidebar",
+        host,
+      });
+      if (session) sidebarState = { ...sidebarState, session };
+      return session;
+    } finally {
+      // Clear on success and failure alike so the loading screen's retry can start over.
+      pendingSession = undefined;
+    }
   })();
   return pendingSession;
 }
@@ -195,10 +244,31 @@ async function startSidebarSession(
   host: ChatHost,
   opts: SidebarChatOptions,
 ): Promise<void> {
-  const session = await ensureSidebarSession(opts);
+  let session: ChatSession | undefined;
+  try {
+    session = await ensureSidebarSession(opts);
+  } catch (e) {
+    // Fork change: surface the failure on the loading screen; its retry button keeps the
+    // manual path alive without resurrecting the always-there "Start Chat" page.
+    void webviewView.webview.postMessage({
+      type: "sessionFailed",
+      message: e instanceof Error ? e.message : String(e),
+    });
+    return;
+  }
   if (!session || sidebarState?.view !== webviewView) return;
   webviewView.webview.html = getChatHtml(webviewView.webview);
   session.attach(host);
+}
+
+/** Start the sidebar session with the initial-file resolution (command arg > most recent). */
+async function startSidebarSessionWithInitialFile(
+  webviewView: vscode.WebviewView,
+  host: ChatHost,
+  opts: SidebarChatOptions,
+): Promise<void> {
+  const sessionFile = await resolveInitialSessionFile(opts);
+  await startSidebarSession(webviewView, host, sessionFile ? { ...opts, sessionFile } : opts);
 }
 
 export function createChatSidebarViewProvider(
@@ -212,7 +282,7 @@ export function createChatSidebarViewProvider(
       } as vscode.WebviewOptions & { retainContextWhenHidden?: boolean };
       webviewView.webview.html = sidebarState?.session
         ? getChatHtml(webviewView.webview)
-        : getStarterHtml();
+        : getLoadingHtml(webviewView.webview, opts.extensionUri);
 
       const host = makeHost(webviewView);
       currentHost = host;
@@ -220,7 +290,7 @@ export function createChatSidebarViewProvider(
 
       const startSub = webviewView.webview.onDidReceiveMessage((msg) => {
         if (msg && typeof msg === "object" && (msg as { type?: unknown }).type === "startSession") {
-          void startSidebarSession(webviewView, host, opts);
+          void startSidebarSessionWithInitialFile(webviewView, host, opts);
         }
       });
 
@@ -242,7 +312,7 @@ export function createChatSidebarViewProvider(
             webviewView.webview.html = getChatHtml(webviewView.webview);
             sidebarState.session.attach(host);
           } else if (sidebarState?.view === webviewView) {
-            webviewView.webview.html = getStarterHtml();
+            webviewView.webview.html = getLoadingHtml(webviewView.webview, opts.extensionUri);
           }
         }
       });
@@ -252,16 +322,9 @@ export function createChatSidebarViewProvider(
       } else {
         // Fork change: auto-start on first open — no manual "Start Chat" click needed. The
         // most recent session of the workspace is resumed so the history is right there; the
-        // starter screen stays up only for the ~1s the RPC subprocess needs to boot (and as a
-        // manual fallback if starting fails).
-        void (async () => {
-          const sessionFile = await resolveInitialSessionFile(opts);
-          await startSidebarSession(
-            webviewView,
-            host,
-            sessionFile ? { ...opts, sessionFile } : opts,
-          );
-        })();
+        // loading screen stays up only for the ~1s the RPC subprocess needs to boot (and as a
+        // retry affordance if starting fails).
+        void startSidebarSessionWithInitialFile(webviewView, host, opts);
       }
 
       webviewView.onDidDispose(() => {
