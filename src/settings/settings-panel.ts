@@ -119,6 +119,15 @@ export async function openSettingsPanel(
       retainContextWhenHidden: true,
     },
   );
+  // Fork change: pop the freshly created (and focused) settings tab out into its own window.
+  // VS Code's webview API cannot create an OS window directly, but the built-in
+  // `moveEditorToNewWindow` command moves the active tab out, giving the panel a full-size
+  // independent window. Failure is ignored (falls back to a normal editor tab).
+  setTimeout(function () {
+    void vscode.commands
+      .executeCommand("workbench.action.moveEditorToNewWindow")
+      .then(undefined, function () {});
+  }, 120);
   panel.iconPath = {
     light: vscode.Uri.joinPath(extensionUri, "assets", "logo-light.svg"),
     dark: vscode.Uri.joinPath(extensionUri, "assets", "logo.svg"),

@@ -91,7 +91,6 @@ export const attachBtn = document.getElementById("attach-btn") as HTMLButtonElem
 export const attachPreviewEl = document.getElementById("attach-preview")!;
 export const infoBtn = document.getElementById("info-btn") as HTMLButtonElement;
 export const refreshBtn = document.getElementById("refresh-btn") as HTMLButtonElement;
-export const mcpBtn = document.getElementById("mcp-btn") as HTMLButtonElement;
 export const settingsBtn = document.getElementById("settings-btn") as HTMLButtonElement;
 export const modelWrap = document.getElementById("model-wrap")!;
 export const modelTrigger = document.getElementById("model-trigger") as HTMLButtonElement;
@@ -771,14 +770,6 @@ refreshBtn.addEventListener("mouseenter", function () {
   showTooltip(refreshBtn, t("Reload session"));
 });
 refreshBtn.addEventListener("mouseleave", hideTooltip);
-
-mcpBtn.addEventListener("click", function () {
-  vscode.postMessage({ type: "mcpOpen" });
-});
-mcpBtn.addEventListener("mouseenter", function () {
-  showTooltip(mcpBtn, t("Manage MCP"));
-});
-mcpBtn.addEventListener("mouseleave", hideTooltip);
 
 settingsBtn.addEventListener("click", function () {
   vscode.postMessage({ type: "openSettings" });

@@ -7,7 +7,6 @@ import { t } from "./i18n";
 import "./messages";
 import "./composer";
 import "./rewind";
-import "./mcp-panel";
 import { initTimeline } from "./timeline";
 
 const codiconStyle = document.createElement("style");

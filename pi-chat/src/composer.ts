@@ -89,7 +89,6 @@ import {
 } from "./input-tokens";
 
 import { applyRewindWidget, renderRewindDialog } from "./rewind";
-import { openMcpDrawer, setMcpStatus } from "./mcp-panel";
 
 let isComposing = false;
 
@@ -1869,10 +1868,6 @@ window.addEventListener("message", function (e: MessageEvent) {
       break;
     case "infoPanel":
       showInfoPanel(d.title, d.markdown);
-      break;
-    case "mcpStatus":
-      setMcpStatus(d.servers);
-      openMcpDrawer();
       break;
     case "dialog":
       showDialog(d.request);
