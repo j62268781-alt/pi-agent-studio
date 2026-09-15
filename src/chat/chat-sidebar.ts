@@ -99,7 +99,15 @@ function getChatHtml(webview: vscode.Webview): string {
 function getLoadingHtml(extensionUri: vscode.Uri): string {
   const zh = getLocale() === "zh-cn";
   const nonce = "loader" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-  const logoSvg = readFileSync(join(extensionUri.fsPath, "assets", "icon.svg"), "utf8");
+  // Never let a missing asset take the whole view down (the packaged vsix must list
+  // assets/icon.svg in .vscodeignore; if it is absent anyway, fall back to a text glyph).
+  let logoSvg = "";
+  try {
+    logoSvg = readFileSync(join(extensionUri.fsPath, "assets", "icon.svg"), "utf8");
+  } catch {
+    logoSvg = "";
+  }
+  const logo = logoSvg || `<span style="font-size:34px;font-weight:600;font-style:italic">π</span>`;
   return `<!DOCTYPE html>
 <html lang="${zh ? "zh-cn" : "en"}">
 <head>
@@ -115,7 +123,7 @@ body {
   color: var(--vscode-foreground);
   font-family: var(--vscode-font-family); font-size: var(--vscode-font-size);
 }
-.logo { width: 64px; height: 64px; }
+.logo { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
 .logo svg { width: 100%; height: 100%; display: block; border-radius: 14px; }
 .dots { display: flex; gap: 7px; }
 .dots span {
@@ -141,7 +149,7 @@ body {
 </style>
 </head>
 <body>
-<div class="logo">${logoSvg}</div>
+<div class="logo">${logo}</div>
 <div class="dots" id="dots"><span></span><span></span><span></span></div>
 <div class="hint" id="hint">${zh ? "正在启动会话…" : "Starting session…"}</div>
 <div class="error" id="error">
