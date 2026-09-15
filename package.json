@@ -207,11 +207,6 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "pi",
-          "title": "%pi.activitybar.title%",
-          "icon": "assets/logo.svg"
-        },
-        {
           "id": "pi-chat",
           "title": "%pi.chatContainer.title%",
           "icon": "$(comment-discussion)"
@@ -219,18 +214,6 @@
       ]
     },
     "views": {
-      "pi": [
-        {
-          "type": "webview",
-          "id": "pi-agent-studio.sessions",
-          "name": "%pi.view.sessions%"
-        },
-        {
-          "type": "webview",
-          "id": "pi-agent-studio.settings",
-          "name": "%pi.view.settings%"
-        }
-      ],
       "pi-chat": [
         {
           "type": "webview",
@@ -325,7 +308,7 @@
             "webview",
             "sidebar"
           ],
-          "default": "terminal",
+          "default": "sidebar",
           "enumDescriptions": [
             "%pi.config.ui.enumDesc.0%",
             "%pi.config.ui.enumDesc.1%",
@@ -344,7 +327,9 @@
               "subagent"
             ]
           },
-          "default": [],
+          "default": [
+            "subagent"
+          ],
           "description": "%pi.config.disabledTools.desc%"
         },
         "pi-agent-studio.mcp.enabled": {

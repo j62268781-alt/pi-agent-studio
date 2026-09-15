@@ -627,8 +627,13 @@ function computeSourceLabel(si: { origin: string; source: string; scope: string 
   return si.source || "other";
 }
 
+// Fork change: `pi-agent-studio.disabledTools` defaults to `["subagent"]`, so the bundled
+// subagent extension never registers a tool and `bridge/agents/` feeds no live agent.
+// Point the Agents tab at a non-existent directory so `explore` / `general` stop being
+// reported as "built-in" (they now live in `~/.pi/agent/agents/` as pi-subagents-native
+// definitions) and stop blocking same-name creation in user / project scope.
 function getBuiltinAgentsDir(extensionUri: vscode.Uri): string {
-  return join(extensionUri.fsPath, "bridge", "agents");
+  return join(extensionUri.fsPath, "bridge", "agents.retired");
 }
 
 function resolveScope(raw: unknown): "user" | "project" {

@@ -326,20 +326,6 @@ export async function activate(context: vscode.ExtensionContext) {
       abortCommitGeneration();
     }),
     vscode.window.registerWebviewViewProvider(
-      "pi-agent-studio.sessions",
-      lazyViewProvider(async () => {
-        const { createSessionsViewProvider } = await import("./sessions/sessions-sidebar.ts");
-        return createSessionsViewProvider(extensionUri, bridgeConfig!, sessions, chatTracker);
-      }),
-    ),
-    vscode.window.registerWebviewViewProvider(
-      "pi-agent-studio.settings",
-      lazyViewProvider(async () => {
-        const { createSettingsViewProvider } = await import("./settings/settings-sidebar.ts");
-        return createSettingsViewProvider();
-      }),
-    ),
-    vscode.window.registerWebviewViewProvider(
       "pi-agent-studio.chatSidebar",
       lazyViewProvider(async () => {
         const { createChatSidebarViewProvider } = await import("./chat/chat-sidebar.ts");

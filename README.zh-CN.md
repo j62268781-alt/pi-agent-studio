@@ -1,3 +1,10 @@
+> [!IMPORTANT]
+> **这是 [johnny-zhao/pi-agent-studio](https://github.com/JohnnyZ93/pi-agent-studio) 的个人 fork。**
+> 扩展本体的架构、功能与绝大部分代码均出自 [@JohnnyZ93](https://github.com/JohnnyZ93) 之手；
+> 底层的 agent 是 [@earendil-works](https://github.com/earendil-works) 的 [pi](https://pi.dev/)。在此一并致谢。
+> **如果你需要持续维护、面向通用场景的版本，请使用上游仓库。**
+> 本 fork 针对单机工作流做了定制 —— 详见下方[本 fork 的改动](#本-fork-的改动)。
+
 <div align="center">
 
 <img src="https://github.com/user-attachments/assets/7cb43959-bb66-4dda-a0ab-f6706412ba72" alt="Pi VSCode Logo" width="120" height="120">
@@ -14,6 +21,33 @@
 [![Open VSX](https://img.shields.io/open-vsx/v/johnny-zhao/pi-agent-studio?label=Open%20VSX&color=purple)](https://open-vsx.org/extension/johnny-zhao/pi-agent-studio)
 [![License](https://img.shields.io/github/license/JohnnyZ93/pi-agent-studio?color=orange&label=License)](https://github.com/JohnnyZ93/pi-agent-studio/blob/main/LICENSE)
 [![Stars](https://img.shields.io/github/stars/JohnnyZ93/pi-agent-studio?style=social)](https://github.com/JohnnyZ93/pi-agent-studio)
+
+## 本 fork 的改动
+
+相对上游共 6 项有意为之的差异。每项都尽量做小，以便从上游同步的成本保持在低位 ——
+完整的原因、涉及的文件路径与验证方式都记在 [`AGENTS.md`](AGENTS.md) 的 **"Fork changes vs upstream"** 一节。
+
+| #   | 改动                                                                                                                                                                    | 原因                                                                                             |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 1   | **把 `subagent` 工具交给外部的 [pi-subagents](https://github.com/nicobailon/pi-subagents)** —— `pi-agent-studio.disabledTools` 默认值改为 `["subagent"]`                     | 两个扩展注册同名工具 `subagent` 时 pi 会**直接 exit 1**，所以内置的那套必须让路                    |
+| 2   | **聊天面板兼容 pi-subagents 的返回结构**（用 `error` / `interrupted` / `timedOut` 取代 `stopReason` / `errorMessage`）                                                       | 失败信号不同 —— 不改的话子代理的错误会静默不显示                                                  |
+| 3   | **侧边栏只保留聊天面板** —— 移除 `pi` 活动栏容器及其 sessions / settings 视图，`pi-agent-studio.ui` 默认值改为 `sidebar`                                                     | 只留一个面板，去掉冗余                                                                            |
+| 4   | **设置 → Agents 不再声称存在内置来源**                                                                                                                                   | 内置 agent 已不再加载，继续标为 built-in 还会导致无法创建同名 agent                               |
+| 5   | **模型 / 思考深度 / 权限审批选择器在窄侧边栏下保持可见**                                                                                                                 | 上游在 640px / 420px 以下把它们隐藏了 —— 而侧边栏默认约 300px，三个全被藏起来                     |
+| 6   | **输入框加高**（最小高度 28px → 40px）                                                                                                                                   | 28px 视觉上偏矮                                                                                   |
+
+### 配套设置（仓库之外）
+
+`explore` 与 `general` 在这里以 **pi-subagents 原生 agent 定义**的形式提供，改写自内置的
+`bridge/agents/*.md`，并做了两点增强：`explore` 增加了 `grep` / `find` / `ls`（内置版只有
+`read, bash`，搜索得绕 `bash grep`）以及 `thinking: low`；`general` 补上了正文并采用
+`systemPromptMode: append`（其内置版本正文为空，即历来只扩展父提示、从不替换）。
+
+pi-subagents 从 `~/.pi/agent/agents/` 发现 agent，因此复制过去即可：
+
+```bash
+cp extras/agents/*.md ~/.pi/agent/agents/
+```
 
 ## 特性
 
@@ -93,7 +127,7 @@ ovsx get johnny-zhao/pi-agent-studio
   - **Providers** —— 在 `~/.pi/agent/models.json` 中新增 / 重命名 / 编辑 / 删除自定义 Provider；支持按 Provider 配置 `authHeader` 开关与自定义请求头（env / command 占位符）、按模型覆盖 API 协议与 base URL、OpenAI / Anthropic 兼容字段、**采样参数**、成本分层与思考级别映射
   - **OAuth** —— 通过内置 `AuthStorage` 登录支持 OAuth 的 Provider
   - **API Keys** —— 管理 `~/.pi/agent/auth.json` 中保存的 API Key
-- **Agents** -- 管理用户 / 项目级 subagent 定义，供内置 `subagent` 工具使用
+- **Agents** -- 管理用户 / 项目级 subagent 定义。**本 fork 说明：** 内置 `subagent` 工具默认已停用（`pi-agent-studio.disabledTools`），这些定义改由外部的 [pi-subagents](https://github.com/nicobailon/pi-subagents) 消费
 - **Prompt Templates** -- 在用户 / 项目作用域内创建 / 编辑 / 删除 / 打开 pi 提示词模板（带 YAML frontmatter 的 markdown）
 - **Skills** -- 在用户 / 项目作用域内创建 / 编辑 / 删除 pi 技能（SKILL.md）；外部技能只读展示，可打开源文件
 - **MCP Servers** -- 在用户（`~/.pi/agent/mcp.json`）与项目（`.pi/mcp.json`）作用域内新增 / 编辑 / 删除 MCP 服务器配置，合并为带来源徽标的去重列表；显式**传输方式选择器**（stdio / http）只展示对应字段——stdio 为 command/args/env/cwd，http 为 url/headers/bearerToken，另有每台服务器的 `directTools` 配置
@@ -119,7 +153,7 @@ ovsx get johnny-zhao/pi-agent-studio
 
 - **todo** -- `todo` LLM 工具，配输入框上方的实时列表 widget，以及 `/todos`、`/todo-clear` 命令
 - **questionnaire** -- 让 Agent 提出结构化问题（webview 模式下渲染为原生表单）
-- **subagent** -- 将任务委派给专门 Agent（内置 `explore`、`general`，可自定义）；在设置面板的 **Agents** 标签页管理
+- **subagent** -- **本 fork 默认停用**（`pi-agent-studio.disabledTools`）；该工具改由外部的 [pi-subagents](https://github.com/nicobailon/pi-subagents) 提供，它自带 `scout` / `worker` / `reviewer` / `oracle`，并读取同一套由 **Agents** 标签页管理的 `~/.pi/agent/agents/` 定义
 - **permission-gate** -- 拦截危险 bash 命令（匹配 `pi-agent-studio.permission.dangerousPatterns`，如 `rm -rf`、`sudo`），执行前需人工批准；可通过 `/permission` 按会话切换模式
 - **rewind-code** -- 基于文件内容快照，在通过 `/tree` 回退历史消息时可选择同时恢复其代码变更（`/fork` 仅回退消息）；webview 面板中驱动实时变更文件 widget，支持 Accept / Revert
 - **btw** -- `/btw` 提问旁路问题，不污染主对话上下文

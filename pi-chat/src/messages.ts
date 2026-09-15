@@ -1264,6 +1264,10 @@ export function subagentDetailsHasError(details: any): boolean {
 export function isFailedSubagent(r: any): boolean {
   if (!r) return false;
   if (r.exitCode === -1) return false;
+  // Fork change: the external `subagent` provider (pi-subagents) reports
+  // failures through `error` / `interrupted` / `timedOut` instead of pi's
+  // `stopReason`, so accept either shape.
+  if (r.error || r.interrupted || r.timedOut) return true;
   return r.exitCode !== 0 || r.stopReason === "error" || r.stopReason === "aborted";
 }
 
@@ -1333,9 +1337,11 @@ function renderAgentBody(parent: HTMLElement, r: any): string {
       parent.appendChild(cdiv);
     }
   }
-  if (failed && r.errorMessage) {
+  // Fork change: pi-subagents carries the message on `error`, not `errorMessage`.
+  const errorText = r.errorMessage || r.error;
+  if (failed && errorText) {
     const errDiv = el("div", "sub-error");
-    errDiv.textContent = t("Error: {0}", r.errorMessage);
+    errDiv.textContent = t("Error: {0}", errorText);
     parent.appendChild(errDiv);
   }
   const final = r && r.exitCode === -1 ? "" : getFinalOutput(r.messages || []);

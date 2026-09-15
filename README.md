@@ -1,3 +1,11 @@
+> [!IMPORTANT]
+> **This is a personal fork of [johnny-zhao/pi-agent-studio](https://github.com/JohnnyZ93/pi-agent-studio).**
+> The extension itself — its architecture, features and essentially all of the code — is the work of
+> [@JohnnyZ93](https://github.com/JohnnyZ93); the underlying agent is [pi](https://pi.dev/) by
+> [@earendil-works](https://github.com/earendil-works). Many thanks to both.
+> **If you want the maintained, general-purpose extension, use upstream.** This fork is tuned to one
+> machine's workflow — see [What this fork changes](#what-this-fork-changes) below.
+
 <div align="center">
 
 <img src="https://github.com/user-attachments/assets/7cb43959-bb66-4dda-a0ab-f6706412ba72" alt="Pi VSCode Logo" width="120" height="120">
@@ -14,6 +22,35 @@ English | [简体中文](README.zh-CN.md)
 [![Open VSX](https://img.shields.io/open-vsx/v/johnny-zhao/pi-agent-studio?label=Open%20VSX&color=purple)](https://open-vsx.org/extension/johnny-zhao/pi-agent-studio)
 [![License](https://img.shields.io/github/license/JohnnyZ93/pi-agent-studio?color=orange&label=License)](https://github.com/JohnnyZ93/pi-agent-studio/blob/main/LICENSE)
 [![Stars](https://img.shields.io/github/stars/JohnnyZ93/pi-agent-studio?style=social)](https://github.com/JohnnyZ93/pi-agent-studio)
+
+## What this fork changes
+
+Six deliberate divergences from upstream. Each is kept as small as possible so that syncing from
+upstream stays cheap — the full rationale, exact file paths and verification notes for every one
+live in [`AGENTS.md`](AGENTS.md) under **"Fork changes vs upstream"**.
+
+| #   | Change                                                                                                                                                            | Why                                                                                                                            |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **Delegates the `subagent` tool to the external [pi-subagents](https://github.com/nicobailon/pi-subagents)** — `pi-agent-studio.disabledTools` defaults to `["subagent"]` | Both extensions register a tool named `subagent`, and pi **exits 1** on that clash, so the bundled one has to yield             |
+| 2   | **Chat panel understands pi-subagents' result shape** (`error` / `interrupted` / `timedOut` instead of `stopReason` / `errorMessage`)                              | Different failure signalling — without it, subagent errors render silently                                                      |
+| 3   | **Sidebar shows only the chat panel** — the `pi` activity container and its sessions / settings views are gone, and `pi-agent-studio.ui` defaults to `sidebar`      | One panel, no redundant chrome                                                                                                  |
+| 4   | **Settings → Agents stops claiming a built-in source**                                                                                                            | The bundled agents no longer load, so reporting them as built-in also blocked creating same-name agents                          |
+| 5   | **Model / thinking-depth / permission pickers stay visible in narrow sidebars**                                                                                   | Upstream hid them below 640px / 420px — i.e. below the default ~300px sidebar, so all three vanished                             |
+| 6   | **Taller composer input** (minimum 28px → 40px)                                                                                                                   | 28px read as cramped                                                                                                            |
+
+### Companion setup (outside this repo)
+
+`explore` and `general` ship here as **pi-subagents-native agent definitions**, re-authored from the
+bundled `bridge/agents/*.md` with two upgrades: `explore` gains `grep` / `find` / `ls` (the bundled
+version only had `read, bash`, so searching meant shelling out to `bash grep`) plus `thinking: low`;
+`general` gains a short body and `systemPromptMode: append` (its bundled body was empty, i.e. it
+only ever extended the parent prompt).
+
+pi-subagents discovers agents in `~/.pi/agent/agents/`, so copy them there:
+
+```bash
+cp extras/agents/*.md ~/.pi/agent/agents/
+```
 
 ## Features
 
@@ -93,7 +130,7 @@ The **Settings** sidebar's jump button (or the `Pi: Open Settings` command) open
   - **Providers** — Add / rename / edit / delete custom providers in `~/.pi/agent/models.json`; per-provider `authHeader` toggle and custom headers (env/command placeholders), per-model API protocol / base URL overrides, OpenAI / Anthropic compatibility fields, **sampling parameters**, cost tiers and thinking-level maps
   - **OAuth** — Sign in to providers that support OAuth, managed through the bundled `AuthStorage`
   - **API Keys** — Manage stored API keys in `~/.pi/agent/auth.json`
-- **Agents** - Manage user/project-level subagent definitions used by the bundled `subagent` tool
+- **Agents** - Manage user/project-level subagent definitions. **Fork note:** the bundled `subagent` tool is disabled by default (`pi-agent-studio.disabledTools`), so these definitions are consumed by the external [pi-subagents](https://github.com/nicobailon/pi-subagents) extension instead
 - **Prompt Templates** - Create / edit / delete / open pi prompt templates (markdown with YAML frontmatter) in user and project scopes
 - **Skills** - Create / edit / delete pi skills (SKILL.md) in user and project scopes; external skills are shown read-only with an option to open the file
 - **MCP Servers** - Add / edit / delete MCP server configs in user (`~/.pi/agent/mcp.json`) and project (`.pi/mcp.json`) scopes, merged into a single deduplicated list with source badges; an explicit **transport selector** (stdio / http) shows only the relevant fields — command/args/env/cwd for stdio, url/headers/bearerToken for http — plus per-server `directTools` configuration
@@ -119,7 +156,7 @@ Beyond the editor bridge, the extension bundles a few pi extensions that add age
 
 - **todo** - a `todo` LLM tool with a live list widget above the composer, plus `/todos` and `/todo-clear` commands
 - **questionnaire** - lets the agent ask structured questions (rendered as a native web form in webview mode)
-- **subagent** - delegate tasks to specialized agents (`explore`, `general`, plus your own); managed from the **Agents** tab of the Settings panel
+- **subagent** - **disabled by default in this fork** (`pi-agent-studio.disabledTools`); the `subagent` tool is provided by the external [pi-subagents](https://github.com/nicobailon/pi-subagents) extension instead, which ships `scout` / `worker` / `reviewer` / `oracle` and reads the same `~/.pi/agent/agents/` definitions managed from the **Agents** tab
 - **permission-gate** - intercepts dangerous bash commands (matching `pi-agent-studio.permission.dangerousPatterns`, e.g. `rm -rf`, `sudo`) and requires approval before execution; switch per session via `/permission`
 - **rewind-code** - file-level content snapshots that let you rewind a historical message via `/tree` and optionally restore its code changes (message-only on `/fork`); in the webview panel it drives a live changed-files widget with Accept / Revert
 - **btw** - `/btw` asks a question without altering the main conversation context

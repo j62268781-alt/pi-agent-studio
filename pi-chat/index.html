@@ -95,6 +95,7 @@
                 <span class="model-trigger-label" id="model-trigger-label"></span>
               </button>
               <div class="model-popup" id="model-popup" style="display: none">
+                <div class="picker-title" id="model-title"></div>
                 <input
                   id="model-search"
                   class="model-search"
@@ -105,8 +106,14 @@
                 <div class="model-list" id="model-list"></div>
               </div>
             </div>
-            <div class="select-wrap">
-              <select id="thinking-select" class="select-borderless thinking-select"></select>
+            <div class="select-wrap thinking-wrap" id="thinking-wrap">
+              <button id="thinking-trigger" class="thinking-trigger" type="button">
+                <span class="thinking-trigger-label" id="thinking-trigger-label"></span>
+              </button>
+              <div class="thinking-popup" id="thinking-popup" style="display: none">
+                <div class="picker-title" id="thinking-title"></div>
+                <div class="thinking-list" id="thinking-list"></div>
+              </div>
             </div>
             <button id="send" class="icon-btn send-btn" type="button">
               <span class="codicon codicon-send"></span>

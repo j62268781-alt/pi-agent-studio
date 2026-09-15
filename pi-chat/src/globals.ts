@@ -97,6 +97,7 @@ export const modelWrap = document.getElementById("model-wrap")!;
 export const modelTrigger = document.getElementById("model-trigger") as HTMLButtonElement;
 export const modelTriggerLabel = document.getElementById("model-trigger-label")!;
 export const modelPopup = document.getElementById("model-popup")!;
+export const modelTitle = document.getElementById("model-title")!;
 export const modelSearch = document.getElementById("model-search") as HTMLInputElement;
 export const modelList = document.getElementById("model-list")!;
 export let enabledModelKeys: Set<string> = new Set();
@@ -119,7 +120,12 @@ export let prevTurn: any = null;
 export function setPrevTurn(v: any) {
   prevTurn = v;
 }
-export const thinkingSelect = document.getElementById("thinking-select") as HTMLSelectElement;
+export const thinkingWrap = document.getElementById("thinking-wrap")!;
+export const thinkingTrigger = document.getElementById("thinking-trigger") as HTMLButtonElement;
+export const thinkingTriggerLabel = document.getElementById("thinking-trigger-label")!;
+export const thinkingPopup = document.getElementById("thinking-popup")!;
+export const thinkingTitle = document.getElementById("thinking-title")!;
+export const thinkingList = document.getElementById("thinking-list")!;
 export const permissionSelect = document.getElementById("permission-select") as HTMLSelectElement;
 export const permissionIcon = document.getElementById("permission-icon")!;
 export const statusEl = document.getElementById("status")!;

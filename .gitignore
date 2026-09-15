@@ -14,3 +14,4 @@ package-lock.json
 docs
 .pi/mcp.json
 .playwright-mcp
+.workbuddy/

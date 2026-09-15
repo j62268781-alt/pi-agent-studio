@@ -15,13 +15,20 @@ import {
   modelTrigger,
   modelTriggerLabel,
   modelPopup,
+  modelTitle,
   modelSearch,
   modelList,
   enabledModelKeys,
   setEnabledModelKeys,
   ctxRing,
   ctxRingText,
-  thinkingSelect,
+  thinkingWrap,
+  thinkingTrigger,
+  thinkingTriggerLabel,
+  thinkingPopup,
+  thinkingTitle,
+  thinkingList,
+  ICON_CHECK,
   permissionSelect,
   permissionIcon,
   sessionInfoEl,
@@ -110,8 +117,9 @@ function fitModelTrigger() {
   modelMeasurer.textContent = modelTriggerLabel.textContent || "";
   modelTrigger.style.width = modelMeasurer.offsetWidth + 18 + "px";
 }
-function fitThinkingSelect() {
-  fitSelectToText(thinkingSelect, 22);
+function fitThinkingTrigger() {
+  modelMeasurer.textContent = thinkingTriggerLabel.textContent || "";
+  thinkingTrigger.style.width = modelMeasurer.offsetWidth + 18 + "px";
 }
 function fitPermissionSelect() {
   fitSelectToText(permissionSelect, 16);
@@ -197,6 +205,11 @@ function renderModelList() {
     label.textContent = modelLabel(m);
     item.appendChild(iconSlot);
     item.appendChild(label);
+    if (state.model && m.provider === state.model.provider && m.id === state.model.id) {
+      const check = el("span", "model-item-check");
+      check.innerHTML = ICON_CHECK;
+      item.appendChild(check);
+    }
     const star = el("button", "model-star" + (isFavorite(m) ? " is-on" : ""));
     star.type = "button";
     star.setAttribute("data-i", String(i));
@@ -272,6 +285,7 @@ function openModelPopup() {
   modelQuery = "";
   modelSearch.value = "";
   modelHighlight = -1;
+  modelTitle.textContent = t("Model");
   modelPopup.style.display = "block";
   renderModelList();
   positionModelPopup();
@@ -309,17 +323,122 @@ function toggleFavorite(m: any) {
   vscode.postMessage({ type: "toggleFavorite", provider: m.provider, modelId: m.id });
 }
 
-function renderThinking() {
-  thinkingSelect.innerHTML = "";
-  const levels = thinkingLevels.length ? thinkingLevels : ["off"];
+// ---- thinking level picker (popup card) ----
+const THINKING_DESCRIPTIONS: Record<string, string> = {
+  off: "No reasoning, replies directly",
+  minimal: "Minimal reasoning",
+  low: "Light reasoning",
+  medium: "Balanced reasoning and speed",
+  high: "Deep reasoning",
+  xhigh: "Extra deep reasoning",
+  max: "Maximum reasoning budget",
+};
+const FALLBACK_THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
+
+let thinkingPopupOpen = false;
+
+function availableThinkingLevels(): string[] {
+  return thinkingLevels.length ? thinkingLevels : FALLBACK_THINKING_LEVELS;
+}
+
+function currentThinkingLevel(): string {
+  const levels = availableThinkingLevels();
+  return levels.indexOf(state.thinkingLevel) >= 0 ? state.thinkingLevel : levels[0];
+}
+
+function renderThinkingLabel() {
+  thinkingTriggerLabel.textContent = currentThinkingLevel();
+  fitThinkingTrigger();
+}
+
+function renderThinkingList() {
+  const levels = availableThinkingLevels();
+  const current = currentThinkingLevel();
+  thinkingList.innerHTML = "";
   for (let i = 0; i < levels.length; i++) {
-    const opt = document.createElement("option");
-    opt.value = levels[i];
-    opt.textContent = levels[i];
-    if (levels[i] === state.thinkingLevel) opt.selected = true;
-    thinkingSelect.appendChild(opt);
+    const level = levels[i];
+    const item = el("button", "thinking-item" + (level === current ? " selected" : ""));
+    item.type = "button";
+    item.setAttribute("data-level", level);
+    const text = el("span", "thinking-item-text");
+    const title = el("span", "thinking-item-title");
+    title.textContent = level;
+    const desc = el("span", "thinking-item-desc");
+    desc.textContent = t(THINKING_DESCRIPTIONS[level] || level);
+    text.appendChild(title);
+    text.appendChild(desc);
+    const check = el("span", "thinking-item-check");
+    check.innerHTML = ICON_CHECK;
+    item.appendChild(text);
+    item.appendChild(check);
+    thinkingList.appendChild(item);
   }
-  fitThinkingSelect();
+}
+
+function positionThinkingPopup() {
+  const r = thinkingWrap.getBoundingClientRect();
+  thinkingPopup.style.minWidth = Math.max(230, r.width) + "px";
+  thinkingPopup.style.left = "";
+  thinkingPopup.style.right = "";
+  const pw = thinkingPopup.offsetWidth;
+  const margin = 8;
+  let left = 0;
+  if (r.left + pw > window.innerWidth - margin) {
+    left = r.width - pw;
+    if (r.left + left < margin) left = -(r.left - margin);
+  }
+  thinkingPopup.style.left = left + "px";
+  const ph = thinkingPopup.offsetHeight || 280;
+  const spaceBelow = window.innerHeight - r.bottom;
+  if (spaceBelow < ph + 8 && r.top > spaceBelow) {
+    thinkingPopup.style.bottom = r.height + "px";
+    thinkingPopup.style.top = "";
+  } else {
+    thinkingPopup.style.top = r.height + "px";
+    thinkingPopup.style.bottom = "";
+  }
+}
+
+function openThinkingPopup() {
+  if (thinkingPopupOpen) return;
+  thinkingPopupOpen = true;
+  thinkingTitle.textContent = t("Thinking level");
+  renderThinkingList();
+  thinkingPopup.style.display = "block";
+  positionThinkingPopup();
+  thinkingWrap.classList.add("is-open");
+  document.addEventListener("mousedown", onThinkingPopupOutside);
+}
+
+function closeThinkingPopup() {
+  if (!thinkingPopupOpen) return;
+  thinkingPopupOpen = false;
+  thinkingPopup.style.display = "none";
+  thinkingWrap.classList.remove("is-open");
+  document.removeEventListener("mousedown", onThinkingPopupOutside);
+}
+
+function onThinkingPopupOutside(ev: MouseEvent) {
+  const target = ev.target as HTMLElement;
+  if (target && (target === thinkingWrap || thinkingWrap.contains(target))) return;
+  closeThinkingPopup();
+}
+
+function toggleThinkingPopup() {
+  if (thinkingPopupOpen) closeThinkingPopup();
+  else openThinkingPopup();
+}
+
+function selectThinking(level: string) {
+  closeThinkingPopup();
+  thinkingTriggerLabel.textContent = level;
+  fitThinkingTrigger();
+  vscode.postMessage({ type: "setThinking", level: level });
+}
+
+function renderThinking() {
+  renderThinkingLabel();
+  if (thinkingPopupOpen) renderThinkingList();
 }
 
 let permissionTip = "";
@@ -673,7 +792,8 @@ function sendPrompt(behavior?: string) {
 
 function autoGrow() {
   inputEl.style.height = "auto";
-  const h = Math.max(28, Math.min(inputEl.scrollHeight, 200));
+  // Fork change: keep this floor in sync with `#input`'s min-height in style.css.
+  const h = Math.max(40, Math.min(inputEl.scrollHeight, 200));
   inputEl.style.height = h + "px";
   inputEl.style.overflowY = h >= 200 ? "auto" : "hidden";
 }
@@ -1169,9 +1289,17 @@ modelSearch.addEventListener("keydown", function (ev: KeyboardEvent) {
   }
 });
 
-thinkingSelect.addEventListener("change", function () {
-  vscode.postMessage({ type: "setThinking", level: thinkingSelect.value });
-  fitThinkingSelect();
+thinkingTrigger.addEventListener("click", function (ev) {
+  ev.stopPropagation();
+  toggleThinkingPopup();
+});
+
+thinkingList.addEventListener("click", function (ev) {
+  const target = ev.target as HTMLElement;
+  const item = target.closest(".thinking-item") as HTMLElement | null;
+  if (!item) return;
+  const level = item.getAttribute("data-level");
+  if (level) selectThinking(level);
 });
 
 permissionSelect.addEventListener("change", function () {
@@ -1465,10 +1593,10 @@ permissionWrap.addEventListener("mouseenter", function () {
   showTooltip(permissionWrap, permissionTip);
 });
 permissionWrap.addEventListener("mouseleave", hideTooltip);
-thinkingSelect.addEventListener("mouseenter", function () {
-  showTooltip(thinkingSelect, t("Thinking level"));
+thinkingTrigger.addEventListener("mouseenter", function () {
+  showTooltip(thinkingTrigger, t("Thinking level"));
 });
-thinkingSelect.addEventListener("mouseleave", hideTooltip);
+thinkingTrigger.addEventListener("mouseleave", hideTooltip);
 sendBtn.addEventListener("mouseenter", function () {
   showTooltip(sendBtn, sendBtnTip);
 });

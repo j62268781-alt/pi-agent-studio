@@ -4,6 +4,116 @@ This file provides guidance to Code Agent when working with code in this reposit
 
 **Always keep AGENTS.md updated with project status.**
 
+## Fork changes vs upstream
+
+This repo is a personal fork of `johnny-zhao/pi-agent-studio`. Everything listed here is a
+deliberate divergence — **keep this the single source of truth** so upstream syncs stay small.
+Each entry names the file and the reason, so a merge conflict is a two-line decision.
+
+### 1. Delegate `subagent` to the external `pi-subagents` (2026-09-15)
+
+- `package.json` → `pi-agent-studio.disabledTools.default` is now `["subagent"]` (upstream: `[]`).
+- **Why**: pi hard-fails when two extensions register the same tool name. `resource-loader.js`
+  `detectExtensionConflicts()` pushes the clash into `extensionsResult.errors`, and `main.js`
+  does `if (hasRuntimeErrors) { …; process.exit(1) }` with **no mode check** — so TUI, `rpc`,
+  `json` and `print` all die at startup. The bundled `bridge/subagent/index.ts` and the npm
+  `pi-subagents` both register a tool named `subagent`, so upstream's default makes the
+  extension unstartable on any machine that has `pi-subagents` installed.
+  (Note: `runner.js`'s "first registration per name wins" only applies to paths that never
+  reach the conflict detector — SDK custom tools, reload — not to cross-extension clashes.)
+- **How it works**: `bridge/subagent/index.ts` reads `PI_VSCODE_DISABLED_TOOLS` and returns
+  early when it contains `"subagent"`. That gate is **upstream code** — our change is only the
+  default value. Users who want the bundled one back just clear the setting.
+- **Verified**: `pi --mode rpc -e bridge/subagent/index.ts` → `exit 1`, never answers
+  `get_state`; same command with `PI_VSCODE_DISABLED_TOOLS='["subagent"]'` → answers normally,
+  and the tool description then shows pi-subagents' contract (`{action:"list",capabilities:true}`)
+  instead of `{agent, task}`.
+- **Companion setup (user-level, lives outside this repo)**: `explore` and `general` exist as
+  **pi-subagents-native agent definitions** — real files in `~/.pi/agent/agents/`, not symlinks.
+  They were re-authored from the bundled `bridge/agents/*.md` bodies but use pi-subagents'
+  frontmatter vocabulary, which buys two things the originals lacked:
+  - `explore` — `tools: read, grep, find, ls, bash`, `thinking: low`, `systemPromptMode: replace`.
+    The bundled version only had `read, bash`, so searching meant shelling out to `bash grep`.
+  - `general` — `tools: read, grep, find, ls, bash, edit, write`, `systemPromptMode: append`.
+    `append` is deliberate: the bundled `general.md` had an **empty body**, i.e. it only ever
+    extended the parent prompt and never replaced it, so `append` reproduces that behaviour.
+    **Verified**: `subagent {action:"list",capabilities:true}` reports them under `User agents` as
+    `- explore (user): … Tools: read, grep, find, ls, bash; Thinking: low` and
+    `- general (user): … Tools: read, grep, find, ls, bash, edit, write`.
+- `bridge/agents/{explore,general}.md` is now **reference-only**: with `disabledTools` defaulting
+  to `["subagent"]` nothing loads it. It is kept to keep the upstream diff small, and as the
+  source the user-level definitions above were derived from. If upstream edits these files,
+  decide by hand whether to fold the change into the user-level copies.
+
+### 2. `pi-chat/src/messages.ts` tolerates pi-subagents' result shape
+
+- `isFailedSubagent()` additionally treats `error` / `interrupted` / `timedOut` as failure.
+- `renderAgentBody()` reads `r.errorMessage || r.error`.
+- **Why**: pi-subagents' `SingleResult` signals failures through `error`, not pi's
+  `stopReason` / `errorMessage`. Everything else already lines up — `details.results[]`,
+  `agent`, `task`, `exitCode`, `messages`, `model`, and the entire `Usage` shape (including a
+  numeric `cost`, so `cost.toFixed()` is safe). These two lines are the only real gap;
+  without them subagent errors render silently.
+
+### 3. Sidebar trimmed to the chat panel only
+
+- `package.json` drops the `pi` activity container; `src/extension.ts` drops the
+  `pi-agent-studio.sessions` / `.settings` view providers; `pi-agent-studio.ui` defaults to
+  `sidebar`. Details under "Sidebar views" below. `src/sessions/sessions-sidebar.ts` and
+  `src/settings/settings-sidebar.ts` remain in source as dormant modules.
+
+### 4. Settings "Agents" tab no longer claims a built-in source
+
+- `src/settings/settings-panel.ts` → `getBuiltinAgentsDir()` returns
+  `<extension>/bridge/agents.retired` (a path that never exists) instead of `bridge/agents`.
+- **Why**: with `disabledTools` defaulting to `["subagent"]`, `bridge/agents/` feeds no live
+  agent. Leaving it wired up made the Agents tab tag `explore` / `general` as "built-in" (they
+  are now user-level pi-subagents definitions) and made `isBuiltinName()` **reject creating an
+  agent with those names** in user / project scope — a dead-end, since the user-level copies are
+  the live ones.
+- `loadAgentsFromDir()` already returns `[]` for a missing directory, so this degrades cleanly
+  and `listAgents()` simply lists project / user entries.
+- `README.md` / `README.zh-CN.md` were also corrected to state that the bundled `subagent` tool
+  is disabled by default and the tool is supplied by pi-subagents.
+
+### 5. Composer controls stay visible in narrow sidebars
+
+- `pi-chat/src/style.css` → dropped the `@media (max-width: 640px)` / `(max-width: 420px)` rules
+  that hid `.permission-wrap` / `.model-wrap` / `.thinking-wrap`; replaced with
+  `min-width: 0; flex-shrink: 1` on `.composer-controls-bar > .select-wrap`, plus
+  `flex-shrink: 0` on `.composer-controls-bar > .icon-btn`.
+- **Why**: the VS Code sidebar defaults to roughly 300px — i.e. under **both** breakpoints — so
+  the model / thinking / permission pickers were invisible in the primary UI of this fork
+  (sidebar-only chat). It only looked fine in the editor-area panel, which is wide. The bar's
+  minimum footprint is ~230px and every control already truncates its own label with an
+  ellipsis, so shrinking is enough.
+- **Verified**: built bundle has zero occurrences of the old hide rules and ≥1 of the new one.
+
+### 6. Taller composer input
+
+- `pi-chat/src/style.css` → `#input` `min-height: 28px` → `40px`, `padding: 8px 10px 2px` →
+  `10px 10px 4px`.
+- `pi-chat/src/composer.ts` → the height floor in `autoGrow()`, `Math.max(28, …)` → `Math.max(40, …)`.
+- **Why**: 28px read as cramped in the narrow sidebar composer.
+- **These two values must stay in sync.** The CSS `min-height` wins over the inline `height`
+  that `autoGrow()` sets, so a mismatch is silent — it still renders correctly, but reads as a bug.
+
+### Left alone on purpose (dormant, zero runtime effect)
+
+Keeping these means the upstream diff stays small; none of them execute any more.
+
+- `bridge/subagent/**` (index.ts / agents.ts / README) and `bridge/agents/**` (explore.md /
+  general.md) — still packed by `.vscodeignore`'s `!bridge/**`, but `disabledTools` keeps the
+  extension from registering, so nothing loads them. `bridge/agents/*.md` is kept as the source
+  the user-level definitions were derived from.
+- `src/constants.ts` → `SUBAGENT_EXTENSION_PATH` / `BUILTIN_AGENTS_DIR`, and the matching
+  `-e` / `PI_VSCODE_BUILTIN_AGENTS_DIR` injection in `src/pi.ts` (`:159`, `:203`, `:223`).
+  The env var now has no consumer; the `-e` path still loads the extension, which is what makes
+  the `disabledTools` gate effective.
+- `pi-chat`'s `subagent` rendering (`messages.ts`, `style.css`, `globals.ts`) — **shared, not
+  ours**: pi-subagents returns results under the same `subagent` tool name, so this code renders
+  its output too. It must stay.
+
 ## Build & Run
 
 - pnpm workspace: root `pnpm-workspace.yaml` declares `pi-chat`, **`pi-mcp`** and **`pi-settings`** as members; **single root `pnpm-lock.yaml`** (no lockfile/workspace file inside `pi-chat/`, `pi-mcp/` or `pi-settings/`). Builds use `pnpm --filter <pkg> ...` (e.g. `build`), not `--dir`. `onlyBuiltDependencies: [esbuild]` lives in the root `pnpm-workspace.yaml`.
@@ -38,10 +148,12 @@ Session restoration (`src/sessions.ts` + `session-status-registry.ts`):
 
 CJS wrapper pattern: source is ESM (`"type": "module"`), bundled by rolldown → `dist/extension.cjs` (CJS, `external: vscode`, minified). VS Code's `require()` loader needs CJS output; `?raw` imports are inlined by `rawPlugin` in `rolldown.config.ts`.
 
-Sidebar views (all webview, registered under `pi` activity container):
+Sidebar views — a **single** webview under the `pi-chat` activity container.
 
-- **Sessions** (`src/sessions/`) — Per-workspace session list with client-side search (`session-search.ts`); dropdown when multiple workspace folders exist. Rows and the `+` button branch on `pi-agent-studio.ui` (resolved via `resolveUiMode()` in `src/ui-mode.ts`): `webview` -> `openChatPanel({ cwd })` / `openChatPanel({ sessionFile })`; `sidebar` -> `openSidebarChat({ newSession: true })` / `openSidebarChat({ sessionFile })`; `terminal` -> `createNewTerminal` with `--session <file>` / cwd.
-- **Settings (sidebar, simplified)** (`src/settings/settings-sidebar.ts`) — Env info, links, `Upgrade Pi` button, and a "Full Settings" jump button (opens the pi-settings panel via `pi-agent-studio.openSettings`). No config editing here anymore. Default `visibility: collapsed`. The Node version shown comes from a single unified PATH-level probe (`detectSystemNodeEnv` in `settings-env.ts` — `node --version`/`npm --version` via `execOnPath`, npm needs cmd.exe shim wrapping on Windows; do NOT fall back to `process.version`, it returns VS Code's bundled Node, e.g. v24, misleading nvm users). **First-run onboarding card** (`#onboarding-host` in `settings-sidebar-html.ts`): every `postData` runs `detectSystemNodeEnv` once and ships `envCheck` (node/npm/npmSupported) + `platform` messages. The card renders only when pi is missing: check items (Node ≥ 22.19.0 via `isNodeVersionSupported` in `node-version.ts` — a pure module so vitest can import it, unlike settings-env.ts which pulls in `vscode`), link-only install steps (nodejs.org / pi.dev, no bundled scripts, no command text), a Windows Git Bash hint, and a "restart VS Code" verify hint (PATH changes only apply on VS Code restart). Once pi + node + npm all pass it switches to a next-steps checklist whose buttons post `openSettings {tab}` (`pi-agent-studio.openSettings` accepts an optional tab arg; `openSettingsPanel(uri, initialTab?)` + `setTab` message in `pi-settings/src/main.ts`) or `openVscodeSettings {query}` (`workbench.action.openSettings`). Card is not closable.
+**Fork change (this repo):** the upstream `pi` activity container was removed — `package.json` no longer declares it and `extension.ts` no longer registers the `pi-agent-studio.sessions` / `pi-agent-studio.settings` view providers. `pi-agent-studio.ui` now defaults to `sidebar`. Their modules remain in source as **dormant** code (like `src/packages.ts`) — do not assume they are registered. Settings stay reachable via the `pi-agent-studio.openSettings` command (editor-area panel); the first-run onboarding card that lived in the settings sidebar is dormant with it.
+
+- **Sessions (dormant)** (`src/sessions/sessions-sidebar.ts`) — no longer registered. The session _tracker_ is still live: `createSessionTracker` (`src/sessions.ts`) powers terminal session restore and `sessions.restore()` in `activate()`, and `chat-tracker.ts` still restores webview chat panels when `ui == "webview"`.
+- **Settings (dormant)** (`src/settings/settings-sidebar.ts`) — no longer registered (kept for upstream diffing). Was: env info, links, `Upgrade Pi` button, and a "Full Settings" jump button (opens the pi-settings panel via `pi-agent-studio.openSettings`). No config editing here anymore. Default `visibility: collapsed`. The Node version shown comes from a single unified PATH-level probe (`detectSystemNodeEnv` in `settings-env.ts` — `node --version`/`npm --version` via `execOnPath`, npm needs cmd.exe shim wrapping on Windows; do NOT fall back to `process.version`, it returns VS Code's bundled Node, e.g. v24, misleading nvm users). **First-run onboarding card** (`#onboarding-host` in `settings-sidebar-html.ts`): every `postData` runs `detectSystemNodeEnv` once and ships `envCheck` (node/npm/npmSupported) + `platform` messages. The card renders only when pi is missing: check items (Node ≥ 22.19.0 via `isNodeVersionSupported` in `node-version.ts` — a pure module so vitest can import it, unlike settings-env.ts which pulls in `vscode`), link-only install steps (nodejs.org / pi.dev, no bundled scripts, no command text), a Windows Git Bash hint, and a "restart VS Code" verify hint (PATH changes only apply on VS Code restart). Once pi + node + npm all pass it switches to a next-steps checklist whose buttons post `openSettings {tab}` (`pi-agent-studio.openSettings` accepts an optional tab arg; `openSettingsPanel(uri, initialTab?)` + `setTab` message in `pi-settings/src/main.ts`) or `openVscodeSettings {query}` (`workbench.action.openSettings`). Card is not closable.
 - **Chat (sidebar)** (`src/chat/chat-sidebar.ts`, view id `pi-agent-studio.chatSidebar` in its own `pi-chat` activity bar container, separate from the Pi sessions/settings container) — WebviewView hosting the same full `pi-chat` UI via `getChatWebviewHtml`; `retainContextWhenHidden: true` keeps the webview alive while hidden. **No RPC process is spawned until the user explicitly starts the chat**: the view resolves to a lightweight starter screen (`getStarterHtml`, self-contained CSP + `startSession` button) and `Pi: Open in Sidebar` (`pi-agent-studio.openInSidebar`, focuses the `pi-chat` container + view) is the other way to start — `startSidebarSession` then swaps in the real chat HTML and attaches. **Single background session per window**, deduped through a module-level `pendingSession` promise so concurrent starter-click + command calls spawn only one pi process. No `ChatTracker` persistence (session dies with VS Code, no restore). `openSidebarChat` accepts an optional `sessionFile` (switch to that session: same → focus, different → native modal confirm + `session.switchTo()`) or `newSession: true` (`session.newSession()` in place), both streaming-guarded. Closing/hiding the view does NOT kill the RPC child — `resolveWebviewView` re-attaches the same module-level singleton session (`sidebarState`) to the fresh webview (re-hydrate = full state re-post); `disposeSidebarChat()` kills it on `deactivate()`. On language/mermaid-theme changes the html is regenerated (starter or chat, whichever is active) and the session re-attached.
 
 ### Full Settings panel (`src/settings/` + `pi-settings/`)
@@ -65,7 +177,7 @@ Other extension-host features:
 
 ### Webview chat mode (`src/chat/` + `pi-chat/`)
 
-`pi-agent-studio.ui` accepts three values (`terminal` / `webview` / `sidebar`), resolved via `resolveUiMode()` in `src/ui-mode.ts` (unknown values fall back to `terminal`). When `ui == "webview"`, `Pi: Open` / `Open Here` open a **WebviewPanel** (`openChatPanel` in `chat-panel.ts`), spawning a `pi --mode rpc` subprocess **per panel** (`src/chat/rpc-client.ts`) over JSONL (strict LF framing, no `readline`). `openChatPanel` accepts an optional `cwd` (spawn working dir; toolbar shows `{shortened-cwd} ({git-branch}) • {sessionName}`, branch fetched once via `getGitBranch` in `gitUtils.ts`, detached HEAD omitted). When `ui == "sidebar"`, `Pi: Open`/Sessions entries route to `openSidebarChat`; `Open in New Window` is hidden in the command palette (`config.pi-agent-studio.ui != sidebar`) and early-returns in code.
+`pi-agent-studio.ui` accepts three values (`terminal` / `webview` / `sidebar`), resolved via `resolveUiMode()` in `src/ui-mode.ts` (unknown values fall back to `terminal`). **This fork defaults to `sidebar`** (upstream shipped `terminal`). When `ui == "webview"`, `Pi: Open` / `Open Here` open a **WebviewPanel** (`openChatPanel` in `chat-panel.ts`), spawning a `pi --mode rpc` subprocess **per panel** (`src/chat/rpc-client.ts`) over JSONL (strict LF framing, no `readline`). `openChatPanel` accepts an optional `cwd` (spawn working dir; toolbar shows `{shortened-cwd} ({git-branch}) • {sessionName}`, branch fetched once via `getGitBranch` in `gitUtils.ts`, detached HEAD omitted). When `ui == "sidebar"`, `Pi: Open`/Sessions entries route to `openSidebarChat`; `Open in New Window` is hidden in the command palette (`config.pi-agent-studio.ui != sidebar`) and early-returns in code.
 
 **Shared session controller** (`src/chat/chat-session.ts`): `createChatSession(options)` owns the RPC subprocess and ALL webview<->extension message handling (the big `onMessage` switch: prompt/abort/copy/openFile/setModel/toggleFavorite/setThinking/setSessionName/pickResource/searchFiles/fork/revert/dialogResponse/reload/todoClear/openSettings/mcpOpen/mcpAction/setPermission/btwAbort/rewind\*/rewindDiff; plus `handleExtUiRequest`, `handleBuiltin`, `hydrate`, `applySessionFile`, context-usage stat requests). The host is abstracted as `ChatHost` (`postMessage` / `onDidReceiveMessage` / `onDidDispose` / optional `updateTitle`); host-specific callbacks are `onSessionFile` (panel: `ChatTracker.update` + `sessionToPanel` + `sessionStatusRegistry`), `onStreamingChange`, `onExit`. `session.attach(host)` re-binds to a new webview and re-hydrates full state (used by the sidebar on re-resolve / language reload). `ChatSession` also exposes `switchTo(sessionFile)` and `newSession()` (streaming-guarded, reuse the RPC subprocess; both funnel through the `refreshAfterSwitch()` helper to re-pull state/messages + `applySessionFile`). A module-level `allSessions` set powers the `toggleFavorite` broadcast across all panels + sidebar. `resolveChatBackground` moved to `chat-webview.ts` (shared html/background helpers).
 

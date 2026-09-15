@@ -207,16 +207,16 @@ body {
   flex: 1 1 auto;
   min-width: 4px;
 }
-@media (max-width: 640px) {
-  .composer-controls-bar .permission-wrap {
-    display: none;
-  }
+/* Fork change: upstream hid these controls below 640px / 420px, which meant the default
+   ~300px VS Code sidebar never showed the model / thinking / permission pickers at all.
+   The bar's minimum footprint is well under 300px, so show everything and let the controls
+   shrink instead — each label already truncates itself with an ellipsis. */
+.composer-controls-bar > .select-wrap {
+  min-width: 0;
+  flex-shrink: 1;
 }
-@media (max-width: 420px) {
-  .composer-controls-bar .model-wrap,
-  .composer-controls-bar .thinking-select {
-    display: none;
-  }
+.composer-controls-bar > .icon-btn {
+  flex-shrink: 0;
 }
 .ctx-ring {
   display: inline-flex;
@@ -302,9 +302,117 @@ body {
 .model-wrap {
   position: relative;
 }
-.thinking-select.select-borderless {
-  width: auto;
-  max-width: none;
+.thinking-wrap {
+  position: relative;
+}
+.thinking-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 160px;
+  min-width: 0;
+  background: transparent;
+  color: var(--vscode-foreground);
+  border: none;
+  border-radius: 999px;
+  font-size: var(--chat-fs-12);
+  font-family: inherit;
+  padding: 3px 8px;
+  outline: none;
+  cursor: pointer;
+}
+.thinking-trigger:hover,
+.thinking-wrap.is-open .thinking-trigger {
+  background: var(--vscode-toolbar-hoverBackground);
+}
+.thinking-trigger-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.picker-title {
+  padding: 2px 8px 4px;
+  font-size: var(--chat-fs-11);
+  font-weight: 500;
+  color: var(--vscode-descriptionForeground);
+}
+.thinking-popup {
+  position: absolute;
+  z-index: 60;
+  left: 0;
+  min-width: 230px;
+  max-width: 320px;
+  background: var(--vscode-quickInput-background, var(--vscode-editorWidget-background));
+  color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+  border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.thinking-list {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0;
+}
+.thinking-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.thinking-item:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+.thinking-item.selected {
+  background: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
+}
+.thinking-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.thinking-item-title {
+  font-size: var(--chat-fs-12);
+  color: var(--vscode-foreground);
+}
+.thinking-item-desc {
+  font-size: var(--chat-fs-11);
+  color: var(--vscode-descriptionForeground);
+  line-height: 1.35;
+}
+.thinking-item-check {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--vscode-foreground);
+  visibility: hidden;
+}
+.thinking-item.selected .thinking-item-check {
+  visibility: visible;
+}
+.model-item-check {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--vscode-foreground);
 }
 .permission-select.select-borderless {
   width: auto;
@@ -1662,12 +1770,14 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
   font-weight: 700;
 }
 
+/* Fork change: 28px read as cramped in the narrow sidebar composer. 40px brings it in
+   line with the surrounding controls. Keep in sync with the floor in composer.ts autoGrow(). */
 #input {
   width: 100%;
   display: block;
-  min-height: 28px;
+  min-height: 40px;
   max-height: 200px;
-  padding: 8px 10px 2px;
+  padding: 10px 10px 4px;
   background: transparent;
   color: var(--vscode-input-foreground);
   border: none;
