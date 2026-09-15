@@ -846,17 +846,14 @@ export async function createChatSession(
       case "openSettings":
         void vscode.commands.executeCommand("pi-agent-studio.openSettings");
         break;
-      case "mcpOpen": {
-        const mcpEnabled = vscode.workspace
-          .getConfiguration("pi-agent-studio.mcp")
-          .get("enabled", true);
-        if (!mcpEnabled) {
-          toast('MCP is disabled. Enable it via setting "pi-agent-studio.mcp.enabled".', "warning");
-          break;
-        }
+      case "mcpOpen":
+        // Fork change: MCP is served by the external `pi-mcp-adapter` extension, which is always
+        // present. This used to gate on `pi-agent-studio.mcp.enabled` — a setting that only
+        // controls the bundled (now unused) `pi-mcp` extension — so opening the drawer wrongly
+        // reported "MCP is disabled" while the adapter was running fine. `/mcp status` is
+        // adapter syntax and produces a plain status notification.
         void rpc.prompt("/mcp status", streaming ? "steer" : undefined).catch(() => {});
         break;
-      }
       case "mcpAction": {
         const action = String(msg.action ?? "status");
         const server = String(msg.server ?? "");

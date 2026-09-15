@@ -98,6 +98,33 @@ Each entry names the file and the reason, so a merge conflict is a two-line deci
 - **These two values must stay in sync.** The CSS `min-height` wins over the inline `height`
   that `autoGrow()` sets, so a mismatch is silent — it still renders correctly, but reads as a bug.
 
+### 7. MCP config panel points at `pi-mcp-adapter`
+
+- `src/mcp/mcp-config.ts` → `getMcpUserPath()` returns `~/.agents/mcp.json` (was
+  `<agentDir>/mcp.json`); `getMcpProjectPath()` returns `<folder>/.mcp.json` (was
+  `<folder>/.pi/mcp.json`). `updateServer()` **merges** (`{...existing, ...entry}`) instead of
+  replacing the whole entry.
+- `src/chat/chat-session.ts` → the `mcpOpen` case no longer gates on
+  `pi-agent-studio.mcp.enabled` before sending `/mcp status`.
+- **Why**: MCP is served by the external `pi-mcp-adapter`, never by the bundled `pi-mcp`
+  (`mcp.enabled` defaults to `false`, so the bundled extension is not even injected). But the
+  Settings panel and the chat drawer still read/wrote the **bundled** extension's config path, so
+  anything configured there silently had no effect — and `mcpOpen` claimed "MCP is disabled"
+  while the adapter was running fine. `/mcp status` and `/mcp <action> <server>` are adapter
+  syntax, so the chat side now passes straight through.
+- **Merge vs replace is load-bearing**: adapter entries carry fields the panel's form does not
+  model (`auth`, `oauth`, `protocolVersion`, `includeTools`). A wholesale replace dropped them on
+  every edit.
+- **Known limits** (accepted, not bugs):
+  - The panel can only see/write the fields in `ServerEntry`; adapter-only fields need a manual
+    JSON edit.
+  - Connection status, reconnect and OAuth live only in `/mcp`'s overlay, which the adapter
+    itself restricts to `ctx.mode === "tui"` — so it needs a real terminal.
+  - The chat MCP drawer no longer auto-opens: it was driven by the structured `mcpStatus`
+    payload, a `pi-mcp` protocol the adapter does not speak. Clicking the toolbar icon now just
+    posts `/mcp status`, which arrives as a multi-line toast (`.toast` has `white-space: pre-wrap`,
+    so it renders fine).
+
 ### Left alone on purpose (dormant, zero runtime effect)
 
 Keeping these means the upstream diff stays small; none of them execute any more.

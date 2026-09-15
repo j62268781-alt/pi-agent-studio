@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
 
 export interface ServerEntry {
   command?: string;
@@ -30,12 +30,17 @@ export interface MergedServerInfo {
   source: "user" | "project";
 }
 
+// Fork change: MCP is served by the external `pi-mcp-adapter` extension, not the bundled
+// `pi-mcp`, so the Settings panel must read and write the adapter's config locations.
+// User scope: `~/.agents/mcp.json` — where this machine's servers already live (the adapter
+// also merges `~/.config/mcp/mcp.json`). Project scope: `<folder>/.mcp.json`, the shared
+// convention (the adapter also accepts `<folder>/mcp.json`).
 export function getMcpUserPath(): string {
-  return join(getAgentDir(), "mcp.json");
+  return join(homedir(), ".agents", "mcp.json");
 }
 
 export function getMcpProjectPath(folder: string): string {
-  return join(folder, ".pi", "mcp.json");
+  return join(folder, ".mcp.json");
 }
 
 export function ensureMcpJson(path: string): string {
@@ -107,8 +112,14 @@ export function addServer(path: string, name: string, entry: ServerEntry): void 
 
 export function updateServer(path: string, name: string, entry: ServerEntry): void {
   const config = readMcpConfig(path);
-  if (!config.mcpServers?.[name]) throw new Error(`Server "${name}" not found`);
-  config.mcpServers[name] = entry;
+  config.mcpServers ??= {};
+  const existing = config.mcpServers[name];
+  if (!existing) throw new Error(`Server "${name}" not found`);
+  // Fork change: merge instead of replace. The panel's form models only a subset of the fields
+  // `pi-mcp-adapter` actually uses (`auth`, `oauth`, `protocolVersion`, `includeTools`, …), so a
+  // wholesale replace would silently drop them. Fields the form owns get overwritten; anything
+  // it does not know about survives.
+  config.mcpServers[name] = { ...existing, ...entry };
   writeMcpConfig(path, config);
 }
 

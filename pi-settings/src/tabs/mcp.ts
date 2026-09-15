@@ -104,8 +104,8 @@ export function renderMcpTab(parent: HTMLElement, data: ServerData) {
       ? ""
       : `<label class="field-label">${t("Scope")}</label>
   <select id="mcp-scope">
-    <option value="user" selected>${t("user (~/.pi/agent/mcp.json)")}</option>
-    ${hasWorkspace ? `<option value="project">${t("project (.pi/mcp.json)")}</option>` : ""}
+    <option value="user" selected>${t("user (~/.agents/mcp.json)")}</option>
+    ${hasWorkspace ? `<option value="project">${t("project (.mcp.json)")}</option>` : ""}
   </select>`
   }
   <label class="field-label">${t("Name")}</label>

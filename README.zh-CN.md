@@ -29,14 +29,14 @@
 相对上游共 6 项有意为之的差异。每项都尽量做小，以便从上游同步的成本保持在低位 ——
 完整的原因、涉及的文件路径与验证方式都记在 [`AGENTS.md`](AGENTS.md) 的 **"Fork changes vs upstream"** 一节。
 
-| #   | 改动                                                                                                                                                                    | 原因                                                                                             |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| 1   | **把 `subagent` 工具交给外部的 [pi-subagents](https://github.com/nicobailon/pi-subagents)** —— `pi-agent-studio.disabledTools` 默认值改为 `["subagent"]`                     | 两个扩展注册同名工具 `subagent` 时 pi 会**直接 exit 1**，所以内置的那套必须让路                    |
-| 2   | **聊天面板兼容 pi-subagents 的返回结构**（用 `error` / `interrupted` / `timedOut` 取代 `stopReason` / `errorMessage`）                                                       | 失败信号不同 —— 不改的话子代理的错误会静默不显示                                                  |
-| 3   | **侧边栏只保留聊天面板** —— 移除 `pi` 活动栏容器及其 sessions / settings 视图，`pi-agent-studio.ui` 默认值改为 `sidebar`                                                     | 只留一个面板，去掉冗余                                                                            |
-| 4   | **设置 → Agents 不再声称存在内置来源**                                                                                                                                   | 内置 agent 已不再加载，继续标为 built-in 还会导致无法创建同名 agent                               |
-| 5   | **模型 / 思考深度 / 权限审批选择器在窄侧边栏下保持可见**                                                                                                                 | 上游在 640px / 420px 以下把它们隐藏了 —— 而侧边栏默认约 300px，三个全被藏起来                     |
-| 6   | **输入框加高**（最小高度 28px → 40px）                                                                                                                                   | 28px 视觉上偏矮                                                                                   |
+| #   | 改动                                                                                                                                                     | 原因                                                                            |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1   | **把 `subagent` 工具交给外部的 [pi-subagents](https://github.com/nicobailon/pi-subagents)** —— `pi-agent-studio.disabledTools` 默认值改为 `["subagent"]` | 两个扩展注册同名工具 `subagent` 时 pi 会**直接 exit 1**，所以内置的那套必须让路 |
+| 2   | **聊天面板兼容 pi-subagents 的返回结构**（用 `error` / `interrupted` / `timedOut` 取代 `stopReason` / `errorMessage`）                                   | 失败信号不同 —— 不改的话子代理的错误会静默不显示                                |
+| 3   | **侧边栏只保留聊天面板** —— 移除 `pi` 活动栏容器及其 sessions / settings 视图，`pi-agent-studio.ui` 默认值改为 `sidebar`                                 | 只留一个面板，去掉冗余                                                          |
+| 4   | **设置 → Agents 不再声称存在内置来源**                                                                                                                   | 内置 agent 已不再加载，继续标为 built-in 还会导致无法创建同名 agent             |
+| 5   | **模型 / 思考深度 / 权限审批选择器在窄侧边栏下保持可见**                                                                                                 | 上游在 640px / 420px 以下把它们隐藏了 —— 而侧边栏默认约 300px，三个全被藏起来   |
+| 6   | **输入框加高**（最小高度 28px → 40px）                                                                                                                   | 28px 视觉上偏矮                                                                 |
 
 ### 配套设置（仓库之外）
 
@@ -50,6 +50,16 @@ pi-subagents 从 `~/.pi/agent/agents/` 发现 agent，因此复制过去即可�
 ```bash
 cp extras/agents/*.md ~/.pi/agent/agents/
 ```
+
+**MCP 同理**，交给外部的 [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter)，不用内置的 `pi-mcp`：
+
+- `pi-agent-studio.mcp.enabled` 默认为 `false`，内置扩展根本不会被注入
+  （否则它会注册 `mcp_tool_search` / `mcp_tool_call` 两个永远搜不到东西的工具——因为它自己的配置是空的）
+- 本 fork 把 **设置 → MCP Servers** 面板指向 adapter 的配置（`~/.agents/mcp.json`，项目级为
+  `<项目>/.mcp.json`），这样表单编辑的就是 adapter 真正读取的文件
+- `updateServer()` 采用 **merge** 而非整体替换，因此 adapter 特有字段（`auth`、`oauth`、
+  `protocolVersion`、`includeTools`）在面板编辑后不会丢失
+- 连接状态、重连与 OAuth 仍需**在终端里**用 `/mcp` —— adapter 的交互面板只在 TUI 模式下渲染
 
 ## 特性
 

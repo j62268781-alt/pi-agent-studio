@@ -32,14 +32,14 @@ Six deliberate divergences from upstream. Each is kept as small as possible so t
 upstream stays cheap — the full rationale, exact file paths and verification notes for every one
 live in [`AGENTS.md`](AGENTS.md) under **"Fork changes vs upstream"**.
 
-| #   | Change                                                                                                                                                            | Why                                                                                                                            |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **Delegates the `subagent` tool to the external [pi-subagents](https://github.com/nicobailon/pi-subagents)** — `pi-agent-studio.disabledTools` defaults to `["subagent"]` | Both extensions register a tool named `subagent`, and pi **exits 1** on that clash, so the bundled one has to yield             |
-| 2   | **Chat panel understands pi-subagents' result shape** (`error` / `interrupted` / `timedOut` instead of `stopReason` / `errorMessage`)                              | Different failure signalling — without it, subagent errors render silently                                                      |
-| 3   | **Sidebar shows only the chat panel** — the `pi` activity container and its sessions / settings views are gone, and `pi-agent-studio.ui` defaults to `sidebar`      | One panel, no redundant chrome                                                                                                  |
-| 4   | **Settings → Agents stops claiming a built-in source**                                                                                                            | The bundled agents no longer load, so reporting them as built-in also blocked creating same-name agents                          |
-| 5   | **Model / thinking-depth / permission pickers stay visible in narrow sidebars**                                                                                   | Upstream hid them below 640px / 420px — i.e. below the default ~300px sidebar, so all three vanished                             |
-| 6   | **Taller composer input** (minimum 28px → 40px)                                                                                                                   | 28px read as cramped                                                                                                            |
+| #   | Change                                                                                                                                                                    | Why                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Delegates the `subagent` tool to the external [pi-subagents](https://github.com/nicobailon/pi-subagents)** — `pi-agent-studio.disabledTools` defaults to `["subagent"]` | Both extensions register a tool named `subagent`, and pi **exits 1** on that clash, so the bundled one has to yield |
+| 2   | **Chat panel understands pi-subagents' result shape** (`error` / `interrupted` / `timedOut` instead of `stopReason` / `errorMessage`)                                     | Different failure signalling — without it, subagent errors render silently                                          |
+| 3   | **Sidebar shows only the chat panel** — the `pi` activity container and its sessions / settings views are gone, and `pi-agent-studio.ui` defaults to `sidebar`            | One panel, no redundant chrome                                                                                      |
+| 4   | **Settings → Agents stops claiming a built-in source**                                                                                                                    | The bundled agents no longer load, so reporting them as built-in also blocked creating same-name agents             |
+| 5   | **Model / thinking-depth / permission pickers stay visible in narrow sidebars**                                                                                           | Upstream hid them below 640px / 420px — i.e. below the default ~300px sidebar, so all three vanished                |
+| 6   | **Taller composer input** (minimum 28px → 40px)                                                                                                                           | 28px read as cramped                                                                                                |
 
 ### Companion setup (outside this repo)
 
@@ -54,6 +54,19 @@ pi-subagents discovers agents in `~/.pi/agent/agents/`, so copy them there:
 ```bash
 cp extras/agents/*.md ~/.pi/agent/agents/
 ```
+
+**MCP** is delegated the same way — to the external
+[pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter), not the bundled `pi-mcp`:
+
+- `pi-agent-studio.mcp.enabled` defaults to `false`, so the bundled extension is never injected
+  (it would otherwise register two `mcp_tool_search` / `mcp_tool_call` tools that can never find
+  anything, since its own config is empty)
+- This fork repoints the **Settings → MCP Servers** panel at the adapter's config
+  (`~/.agents/mcp.json`, or `<project>/.mcp.json`) so the form edits the file the adapter actually reads
+- `updateServer()` **merges** rather than replaces, so adapter-only fields (`auth`, `oauth`,
+  `protocolVersion`, `includeTools`) survive a panel edit
+- Connection status, reconnect and OAuth still require `/mcp` **in a terminal** — the adapter's
+  overlay only renders in TUI mode
 
 ## Features
 
