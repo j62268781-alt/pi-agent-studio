@@ -55,6 +55,35 @@ if (ctxFork) ctxFork.textContent = t("Fork from here");
 const ctxRevert = document.getElementById("ctx-revert");
 if (ctxRevert) ctxRevert.textContent = t("Revert here");
 
+// Fork change: boot splash — stay up over the empty chat until the session history has actually
+// rendered, then fade out. History's thinking blocks collapse on arrival (live thinking still
+// auto-expands while streaming and folds when the turn ends); a 10s timer guards against a
+// stuck handshake.
+const splash = document.getElementById("boot-splash");
+let splashGone = false;
+function dismissSplash() {
+  if (splashGone) return;
+  splashGone = true;
+  if (!splash) return;
+  splash.classList.add("is-done");
+  setTimeout(function () {
+    splash.remove();
+  }, 400);
+}
+window.addEventListener("message", function (ev) {
+  const d = ev.data;
+  if (!d || typeof d !== "object") return;
+  if (d.type === "history") {
+    document.querySelectorAll("details.thinking-block[open]").forEach(function (det) {
+      det.removeAttribute("open");
+    });
+    dismissSplash();
+  } else if (d.type === "error") {
+    dismissSplash();
+  }
+});
+setTimeout(dismissSplash, 10000);
+
 window.addEventListener("load", () => {
   vscode.postMessage({ type: "webviewReady" });
 });

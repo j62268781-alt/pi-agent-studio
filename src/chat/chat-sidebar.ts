@@ -93,26 +93,17 @@ function getChatHtml(webview: vscode.Webview): string {
 
 /** Fork change: the old "Start Chat" page is now a loading screen. The session auto-starts, so
  * this only shows for the ~1s the RPC subprocess needs to boot (plus a retry affordance if
- * starting fails). */
-function getLoadingHtml(
-  webview: vscode.Webview,
-  extensionUri: vscode.Uri,
-  failed?: { message: string },
-): string {
+ * starting fails). It hands off to the in-webview boot splash (index.html #boot-splash), which
+ * stays up until the history has rendered — same π badge and dots on both. */
+function getLoadingHtml(): string {
   const zh = getLocale() === "zh-cn";
   const nonce = "loader" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-  const dark =
-    vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ||
-    vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast;
-  const logo = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, "assets", dark ? "logo.svg" : "logo-light.svg"),
-  );
   return `<!DOCTYPE html>
 <html lang="${zh ? "zh-cn" : "en"}">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';" />
 <style>
 html, body { height: 100%; }
 body {
@@ -122,7 +113,13 @@ body {
   color: var(--vscode-foreground);
   font-family: var(--vscode-font-family); font-size: var(--vscode-font-size);
 }
-.logo { width: 64px; height: 64px; }
+.logo {
+  width: 64px; height: 64px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--vscode-button-background); color: var(--vscode-button-foreground);
+  font-size: 34px; font-weight: 600; font-style: italic;
+  font-family: Georgia, "Times New Roman", serif; user-select: none;
+}
 .dots { display: flex; gap: 7px; }
 .dots span {
   width: 7px; height: 7px; border-radius: 50%;
@@ -147,7 +144,7 @@ body {
 </style>
 </head>
 <body>
-<img class="logo" src="${logo}" alt="pi" />
+<div class="logo">π</div>
 <div class="dots" id="dots"><span></span><span></span><span></span></div>
 <div class="hint" id="hint">${zh ? "正在启动会话…" : "Starting session…"}</div>
 <div class="error" id="error">
@@ -282,7 +279,7 @@ export function createChatSidebarViewProvider(
       } as vscode.WebviewOptions & { retainContextWhenHidden?: boolean };
       webviewView.webview.html = sidebarState?.session
         ? getChatHtml(webviewView.webview)
-        : getLoadingHtml(webviewView.webview, opts.extensionUri);
+        : getLoadingHtml();
 
       const host = makeHost(webviewView);
       currentHost = host;
@@ -312,7 +309,7 @@ export function createChatSidebarViewProvider(
             webviewView.webview.html = getChatHtml(webviewView.webview);
             sidebarState.session.attach(host);
           } else if (sidebarState?.view === webviewView) {
-            webviewView.webview.html = getLoadingHtml(webviewView.webview, opts.extensionUri);
+            webviewView.webview.html = getLoadingHtml();
           }
         }
       });
