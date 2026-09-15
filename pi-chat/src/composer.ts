@@ -615,17 +615,32 @@ function formatSessionTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const now = new Date();
-  if (d.toDateString() === now.toDateString())
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  return d.toLocaleDateString([], { month: "2-digit", day: "2-digit" });
+  const minutes = Math.floor((now.getTime() - d.getTime()) / 60000);
+  if (minutes < 1) return t("just now");
+  if (minutes < 60) return t("{0} min ago", minutes);
+  const hm = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === now.toDateString()) return hm;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return t("Yesterday {0}", hm);
+  const md = d.toLocaleDateString([], { month: "2-digit", day: "2-digit" });
+  if (d.getFullYear() === now.getFullYear()) return md;
+  return d.toLocaleDateString([], { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
+/** Session identity line. Unnamed sessions get a time-derived label so the list reads as a set
+ * of sessions; the first message moves to the preview line instead of posing as the title. */
 function sessionItemTitle(s: SessionItem): string {
   if (s.name) return s.name;
-  const first = s.firstMessage.trim().replace(/\s+/g, " ");
-  if (first) return first.length > 80 ? first.slice(0, 80) + "…" : first;
-  const file = s.file.split("/").pop() || s.file;
-  return file;
+  const d = new Date(s.modified);
+  if (!Number.isNaN(d.getTime())) {
+    const pad = function (n: number) {
+      return (n < 10 ? "0" : "") + n;
+    };
+    const label = `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return t("Session {0}", label);
+  }
+  return s.file.split("/").pop() || s.file;
 }
 
 function renderSessionsList() {
@@ -644,11 +659,17 @@ function renderSessionsList() {
     const text = el("span", "session-item-text");
     const title = el("span", "session-item-title");
     title.textContent = sessionItemTitle(s);
+    text.appendChild(title);
+    const preview = (s.firstMessage || "").trim().replace(/\s+/g, " ");
+    if (preview) {
+      const previewEl = el("span", "session-item-preview");
+      previewEl.textContent = preview.length > 90 ? preview.slice(0, 90) + "…" : preview;
+      text.appendChild(previewEl);
+    }
     const meta = el("span", "session-item-meta");
     const parts = [formatSessionTime(s.modified)];
     if (s.messageCount) parts.push(s.messageCount + " " + t("messages"));
     meta.textContent = parts.filter(Boolean).join(" · ");
-    text.appendChild(title);
     text.appendChild(meta);
     item.appendChild(text);
     if (selected) {

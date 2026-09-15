@@ -159,6 +159,10 @@
   "Other": "其他",
   "Sessions": "会话",
   "No sessions yet.": "暂无会话。",
+  "just now": "刚刚",
+  "{0} min ago": "{0} 分钟前",
+  "Yesterday {0}": "昨天 {0}",
+  "Session {0}": "会话 {0}",
   "messages": "条消息",
   "yours": "你的"
 }
