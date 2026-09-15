@@ -151,5 +151,11 @@
   "with {0}": "使用 {0}",
   "Worked for {0}": "耗时 {0}",
   "Yes": "是",
+  "Permission approval": "权限审批",
+  "Smart approval": "智能审批",
+  "Only high-risk operations require approval": "仅检测到高风险操作时请求批准",
+  "Full access": "完全访问",
+  "Run commands and edit files without asking": "不受限制地执行命令和修改文件",
+  "Other": "其他",
   "yours": "你的"
 }

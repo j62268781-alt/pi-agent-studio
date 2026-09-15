@@ -29,7 +29,12 @@ import {
   thinkingTitle,
   thinkingList,
   ICON_CHECK,
-  permissionSelect,
+  permissionWrap,
+  permissionTrigger,
+  permissionTriggerLabel,
+  permissionPopup,
+  permissionTitle,
+  permissionList,
   permissionIcon,
   sessionInfoEl,
   acEl,
@@ -106,13 +111,6 @@ modelMeasurer.style.cssText =
   "position:absolute;visibility:hidden;white-space:pre;font-family:var(--vscode-font-family);font-size: var(--chat-fs-12);";
 document.body.appendChild(modelMeasurer);
 
-function fitSelectToText(sel: HTMLSelectElement, extra: number) {
-  const opt = sel.options[sel.selectedIndex];
-  if (!opt) return;
-  modelMeasurer.textContent = opt.textContent || opt.value || "";
-  sel.style.width = modelMeasurer.offsetWidth + extra + "px";
-}
-
 function fitModelTrigger() {
   modelMeasurer.textContent = modelTriggerLabel.textContent || "";
   modelTrigger.style.width = modelMeasurer.offsetWidth + 18 + "px";
@@ -120,9 +118,6 @@ function fitModelTrigger() {
 function fitThinkingTrigger() {
   modelMeasurer.textContent = thinkingTriggerLabel.textContent || "";
   thinkingTrigger.style.width = modelMeasurer.offsetWidth + 18 + "px";
-}
-function fitPermissionSelect() {
-  fitSelectToText(permissionSelect, 16);
 }
 
 let modelPopupOpen = false;
@@ -155,14 +150,23 @@ function computeFilteredModels() {
     }
   }
   matched.sort(function (a, b) {
-    const fa = isFavorite(a.m) ? 1 : 0;
-    const fb = isFavorite(b.m) ? 1 : 0;
-    if (fa !== fb) return fb - fa;
+    // Fork change: group by provider instead of interleaving the whole catalogue.
+    const pa = String(a.m.provider || "");
+    const pb = String(b.m.provider || "");
+    if (pa !== pb) return pa.localeCompare(pb);
     return a.ord - b.ord;
   });
-  modelFiltered = matched.map(function (x) {
+  let list = matched.map(function (x) {
     return x.m;
   });
+  // Fork change: when the user has starred models in `enabledModels`, show only those.
+  // An empty list means "nothing starred yet" and falls back to the full catalogue.
+  if (enabledModelKeys.size > 0) {
+    list = list.filter(function (m) {
+      return enabledModelKeys.has(modelKey(m).toLowerCase());
+    });
+  }
+  modelFiltered = list;
 }
 
 function renderModelList() {
@@ -195,8 +199,16 @@ function renderModelList() {
     }
     modelHighlight = target >= 0 ? target : 0;
   }
+  let lastProvider: string | null = null;
   for (let i = 0; i < modelFiltered.length; i++) {
     const m = modelFiltered[i];
+    const provider = String(m.provider || "");
+    if (provider !== lastProvider) {
+      lastProvider = provider;
+      const groupTitle = el("div", "model-group-title");
+      groupTitle.textContent = provider || t("Other");
+      modelList.appendChild(groupTitle);
+    }
     const item = el("div", "model-item" + (i === modelHighlight ? " active" : ""));
     item.setAttribute("data-i", String(i));
     const iconSlot = el("span", "model-item-icon");
@@ -441,25 +453,39 @@ function renderThinking() {
   if (thinkingPopupOpen) renderThinkingList();
 }
 
-let permissionTip = "";
-
-function renderPermission() {
-  permissionSelect.innerHTML = "";
-  const modes = ["AskForApproval", "FullAccess"];
-  for (let i = 0; i < modes.length; i++) {
-    const opt = document.createElement("option");
-    opt.value = modes[i];
-    opt.textContent = modes[i];
-    permissionSelect.appendChild(opt);
-  }
-  fitPermissionSelect();
-  updatePermissionColor(permissionSelect.value);
+// ---- permission picker (popup card) ----
+interface PermissionModeSpec {
+  value: string;
+  title: string;
+  desc: string;
 }
 
-function updatePermissionColor(mode: string) {
-  const safe = mode === "AskForApproval";
-  permissionSelect.classList.toggle("permission-safe", safe);
-  permissionSelect.classList.toggle("permission-danger", !safe);
+const PERMISSION_MODES: PermissionModeSpec[] = [
+  {
+    value: "AskForApproval",
+    title: "Smart approval",
+    desc: "Only high-risk operations require approval",
+  },
+  {
+    value: "FullAccess",
+    title: "Full access",
+    desc: "Run commands and edit files without asking",
+  },
+];
+
+let permissionPopupOpen = false;
+let permissionMode = "AskForApproval";
+let permissionTip = "";
+
+function permissionModeSpec(mode: string): PermissionModeSpec {
+  return PERMISSION_MODES.find((m) => m.value === mode) ?? PERMISSION_MODES[0]!;
+}
+
+function applyPermissionMode(mode: string) {
+  permissionMode = permissionModeSpec(mode).value;
+  const spec = permissionModeSpec(permissionMode);
+  const safe = permissionMode === "AskForApproval";
+  permissionTriggerLabel.textContent = spec.title;
   permissionTip = safe
     ? t("Ask for approval before running commands")
     : t("Full access: run commands without asking");
@@ -469,6 +495,103 @@ function updatePermissionColor(mode: string) {
     permissionIcon.classList.toggle("permission-safe", safe);
     permissionIcon.classList.toggle("permission-danger", !safe);
   }
+}
+
+function renderPermissionList() {
+  permissionList.innerHTML = "";
+  for (const m of PERMISSION_MODES) {
+    const selected = m.value === permissionMode;
+    const item = el("button", "permission-item" + (selected ? " selected" : ""));
+    item.type = "button";
+    item.setAttribute("data-mode", m.value);
+    const icon = el("span", "permission-item-icon");
+    icon.innerHTML =
+      m.value === "AskForApproval"
+        ? '<span class="codicon codicon-shield"></span>'
+        : '<span class="codicon codicon-unlock"></span>';
+    const text = el("span", "permission-item-text");
+    const title = el("span", "permission-item-title");
+    title.textContent = t(m.title);
+    const desc = el("span", "permission-item-desc");
+    desc.textContent = t(m.desc);
+    text.appendChild(title);
+    text.appendChild(desc);
+    const check = el("span", "permission-item-check");
+    check.innerHTML = ICON_CHECK;
+    item.appendChild(icon);
+    item.appendChild(text);
+    item.appendChild(check);
+    item.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      selectPermission(m.value);
+    });
+    permissionList.appendChild(item);
+  }
+}
+
+function positionPermissionPopup() {
+  const r = permissionWrap.getBoundingClientRect();
+  permissionPopup.style.minWidth = Math.max(250, r.width) + "px";
+  permissionPopup.style.left = "";
+  permissionPopup.style.right = "";
+  const pw = permissionPopup.offsetWidth;
+  const margin = 8;
+  let left = 0;
+  if (r.left + pw > window.innerWidth - margin) {
+    left = r.width - pw;
+    if (r.left + left < margin) left = -(r.left - margin);
+  }
+  permissionPopup.style.left = left + "px";
+  const ph = permissionPopup.offsetHeight || 220;
+  const spaceBelow = window.innerHeight - r.bottom;
+  if (spaceBelow < ph + 8 && r.top > spaceBelow) {
+    permissionPopup.style.bottom = r.height + "px";
+    permissionPopup.style.top = "";
+  } else {
+    permissionPopup.style.top = r.height + "px";
+    permissionPopup.style.bottom = "";
+  }
+}
+
+function openPermissionPopup() {
+  if (permissionPopupOpen) return;
+  permissionPopupOpen = true;
+  permissionTitle.textContent = t("Permission approval");
+  renderPermissionList();
+  permissionPopup.style.display = "block";
+  positionPermissionPopup();
+  permissionWrap.classList.add("is-open");
+  document.addEventListener("mousedown", onPermissionPopupOutside);
+}
+
+function closePermissionPopup() {
+  if (!permissionPopupOpen) return;
+  permissionPopupOpen = false;
+  permissionPopup.style.display = "none";
+  permissionWrap.classList.remove("is-open");
+  document.removeEventListener("mousedown", onPermissionPopupOutside);
+}
+
+function onPermissionPopupOutside(ev: MouseEvent) {
+  const target = ev.target as HTMLElement;
+  if (target && (target === permissionWrap || permissionWrap.contains(target))) return;
+  closePermissionPopup();
+}
+
+function togglePermissionPopup() {
+  if (permissionPopupOpen) closePermissionPopup();
+  else openPermissionPopup();
+}
+
+function selectPermission(mode: string) {
+  closePermissionPopup();
+  applyPermissionMode(mode);
+  vscode.postMessage({ type: "setPermission", mode: mode });
+}
+
+function renderPermission() {
+  applyPermissionMode(permissionMode);
+  if (permissionPopupOpen) renderPermissionList();
 }
 
 function applyState(s: any) {
@@ -1302,11 +1425,9 @@ thinkingList.addEventListener("click", function (ev) {
   if (level) selectThinking(level);
 });
 
-permissionSelect.addEventListener("change", function () {
-  const v = permissionSelect.value;
-  fitPermissionSelect();
-  updatePermissionColor(v);
-  vscode.postMessage({ type: "setPermission", mode: v });
+permissionTrigger.addEventListener("click", function (ev) {
+  ev.stopPropagation();
+  togglePermissionPopup();
 });
 
 sendBtn.addEventListener("click", function () {
@@ -1588,7 +1709,6 @@ modelTrigger.addEventListener("mouseenter", function () {
   showTooltip(modelTrigger, t("Model"));
 });
 modelTrigger.addEventListener("mouseleave", hideTooltip);
-const permissionWrap = document.querySelector(".permission-wrap") as HTMLElement;
 permissionWrap.addEventListener("mouseenter", function () {
   showTooltip(permissionWrap, permissionTip);
 });
@@ -1691,9 +1811,7 @@ window.addEventListener("message", function (e: MessageEvent) {
       renderThinking();
       break;
     case "permissionMode":
-      permissionSelect.value = d.mode || "AskForApproval";
-      fitPermissionSelect();
-      updatePermissionColor(permissionSelect.value);
+      renderPermission();
       break;
     case "sendShortcut":
       setSendShortcut(d.value);

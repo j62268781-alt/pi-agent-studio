@@ -72,9 +72,15 @@
             <button id="attach-btn" class="icon-btn" type="button">
               <span class="codicon codicon-add"></span>
             </button>
-            <div class="select-wrap permission-wrap">
+            <div class="select-wrap permission-wrap" id="permission-wrap">
               <span class="codicon permission-icon" id="permission-icon"></span
-              ><select id="permission-select" class="select-borderless permission-select"></select>
+              ><button id="permission-trigger" class="permission-trigger" type="button">
+                <span class="permission-trigger-label" id="permission-trigger-label"></span>
+              </button>
+              <div class="permission-popup" id="permission-popup" style="display: none">
+                <div class="picker-title" id="permission-title"></div>
+                <div class="permission-list" id="permission-list"></div>
+              </div>
             </div>
             <div class="composer-spacer"></div>
             <span class="ctx-ring" id="ctx-ring" title="Context usage"
