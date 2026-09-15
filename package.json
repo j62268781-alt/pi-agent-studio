@@ -403,7 +403,7 @@
         },
         "pi-agent-studio.chatFontSize": {
           "type": "number",
-          "default": 13,
+          "default": 14,
           "minimum": 8,
           "maximum": 32,
           "description": "%pi.config.chatFontSize.desc%"

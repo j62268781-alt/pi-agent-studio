@@ -7,7 +7,6 @@ import { t } from "./i18n";
 import "./messages";
 import "./composer";
 import "./rewind";
-import { initTimeline } from "./timeline";
 
 const codiconStyle = document.createElement("style");
 codiconStyle.textContent =
@@ -55,8 +54,6 @@ const ctxFork = document.getElementById("ctx-fork");
 if (ctxFork) ctxFork.textContent = t("Fork from here");
 const ctxRevert = document.getElementById("ctx-revert");
 if (ctxRevert) ctxRevert.textContent = t("Revert here");
-
-initTimeline();
 
 window.addEventListener("load", () => {
   vscode.postMessage({ type: "webviewReady" });

@@ -44,7 +44,6 @@ import {
 import { showRewindConfirm, tipBtn } from "./rewind";
 import { enhance } from "./enhance";
 import { t } from "./i18n";
-import { scheduleTimelineRebuild as scheduleTimelineRebuildRaw, clearTimeline } from "./timeline";
 
 // ---- message DOM ----
 let renderTarget: HTMLElement = messagesInner;
@@ -60,10 +59,6 @@ function scheduleScroll(): void {
 
 function scrollToBottom(): void {
   if (!suppressUi) scrollToBottomRaw();
-}
-
-function scheduleTimelineRebuild(): void {
-  if (!suppressUi) scheduleTimelineRebuildRaw();
 }
 
 let pendingCompactionBlockRef: HTMLElement | null = null;
@@ -110,7 +105,6 @@ export function addUserMessage(text: string, images?: any[]) {
 
   if (!suppressUi) appendUserActions(row, bubble, text, metaEl);
 
-  scheduleTimelineRebuild();
   scheduleScroll();
   return bubble;
 }
@@ -143,7 +137,6 @@ export function addCompactionMessage(m: any) {
   det.appendChild(body);
   row.appendChild(det);
   renderTarget.appendChild(row);
-  scheduleTimelineRebuild();
   scheduleScroll();
 }
 
@@ -1461,7 +1454,6 @@ let hydrationId = 0;
 export function hydrateMessages(list: any[]) {
   const id = ++hydrationId;
   messagesInner.innerHTML = "";
-  clearTimeline();
   pendingCompactionBlockRef = null;
   pendingBtwBlockRef = null;
   setBtwAbortId(null);
@@ -1491,7 +1483,6 @@ export function hydrateMessages(list: any[]) {
       seedCacheBaseline(list);
       wrapAllWorkSegments();
       applyLastAssistantModel();
-      scheduleTimelineRebuild();
     }
   }
   requestAnimationFrame(step);
@@ -1843,7 +1834,6 @@ export function handleEvent(event: any) {
       setStreaming(false);
       setRetryAttempt(0);
       wrapLastWorkSegment();
-      scheduleTimelineRebuild();
       break;
     case "message_start":
       if (event.message && event.message.role === "assistant")
