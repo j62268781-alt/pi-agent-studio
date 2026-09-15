@@ -2,8 +2,10 @@
 > **这是 [johnny-zhao/pi-agent-studio](https://github.com/JohnnyZ93/pi-agent-studio) 的个人 fork。**
 > 扩展本体的架构、功能与绝大部分代码均出自 [@JohnnyZ93](https://github.com/JohnnyZ93) 之手；
 > 底层的 agent 是 [@earendil-works](https://github.com/earendil-works) 的 [pi](https://pi.dev/)。在此一并致谢。
-> **如果你需要持续维护、面向通用场景的版本，请使用上游仓库。**
-> 本 fork 针对单机工作流做了定制 —— 详见下方[本 fork 的改动](#本-fork-的改动)。
+>
+> 本 fork **同样会持续维护**。它针对单机工作流做了定制，因此与上游存在若干差异 —— 详见下方[本 fork 的改动](#本-fork-的改动)。
+> **欢迎在本仓库提 issue 或功能需求** —— 我会跟进，也乐意帮你把需要的功能做出来。
+> 如果你要找面向通用场景的版本，上游仍然是更好的默认选择。
 
 <div align="center">
 

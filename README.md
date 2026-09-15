@@ -3,8 +3,11 @@
 > The extension itself — its architecture, features and essentially all of the code — is the work of
 > [@JohnnyZ93](https://github.com/JohnnyZ93); the underlying agent is [pi](https://pi.dev/) by
 > [@earendil-works](https://github.com/earendil-works). Many thanks to both.
-> **If you want the maintained, general-purpose extension, use upstream.** This fork is tuned to one
-> machine's workflow — see [What this fork changes](#what-this-fork-changes) below.
+>
+> This fork is **actively maintained**. It is tuned to one machine's workflow and so diverges from
+> upstream in a handful of places — see [What this fork changes](#what-this-fork-changes) below.
+> **Issues and feature requests are welcome on this repo** — I'll follow up, and I'm glad to build
+> out a feature you need. For the general-purpose extension, upstream is still the better default.
 
 <div align="center">
 
