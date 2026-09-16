@@ -218,6 +218,26 @@ body {
   min-width: 0;
   flex-shrink: 1;
 }
+
+/* The permission pill yields first as the bar tightens (higher shrink than
+ * the model picker) and never goes below the "+" button's 30px footprint;
+ * its label ellipsises smoothly on the way down instead of snapping. */
+.composer-controls-bar > .permission-wrap {
+  flex-shrink: 4;
+  min-width: 30px;
+}
+
+/* The model pill keeps showing the current model name: an 86px floor buys
+ * icon + ~6 ellipsised characters, which is exactly what fits when the
+ * sidebar sits at VS Code's ~230px practical minimum. */
+.composer-controls-bar > .model-wrap {
+  flex-shrink: 1;
+  min-width: 86px;
+}
+
+.permission-trigger {
+  min-width: 30px;
+}
 .composer-controls-bar > .icon-btn {
   flex-shrink: 0;
 }
@@ -340,21 +360,17 @@ body {
   letter-spacing: 0.02em;
   color: var(--pi-text-secondary);
 }
-.thinking-popup {
-  position: absolute;
-  z-index: 60;
-  left: 0;
-  min-width: 230px;
-  max-width: 320px;
-  background: var(--pi-bg-raised);
-  color: var(--pi-text);
-  border: 1px solid var(--pi-border);
-  border-radius: 6px;
-  box-shadow: var(--pi-shadow-menu);
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.thinking-panel {
+  /* Inline expand/collapse area under the thinking row — no second-level
+   * popup: the list opens inside the model popup and grows it in place. */
+  display: none;
+  border-top: 1px solid var(--pi-border-divider);
+  margin: 2px 0 0;
+  padding: 4px 0 0;
+}
+
+.thinking-wrap.is-open .thinking-panel {
+  display: block;
 }
 .thinking-list {
   max-height: 320px;
@@ -399,24 +415,6 @@ body {
   font-size: var(--chat-fs-11);
   color: var(--pi-text-secondary);
   line-height: 1.35;
-}
-.thinking-item-check {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  font-size: 13px;
-  color: var(--pi-text);
-  visibility: hidden;
-}
-.thinking-item.selected .thinking-item-check {
-  visibility: visible;
-}
-.model-item-check {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  font-size: 13px;
-  color: var(--pi-text);
 }
 .model-group-title {
   padding: 6px 8px 2px;
@@ -539,7 +537,7 @@ body {
   position: absolute;
   z-index: 60;
   left: 0;
-  min-width: 340px;
+  min-width: min(340px, calc(100vw - 16px));
   max-width: 460px;
   background: var(--pi-bg-raised);
   color: var(--pi-text);
@@ -658,7 +656,7 @@ body {
   position: absolute;
   z-index: 60;
   left: 0;
-  min-width: 260px;
+  min-width: min(260px, calc(100vw - 16px));
   max-width: 360px;
   background: var(--pi-bg-raised);
   color: var(--pi-text);
@@ -3136,7 +3134,6 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
 
 /* ── E · composer popups ─────────────────────────────────────────────────── */
 
-.thinking-popup,
 .permission-popup,
 .model-popup,
 .autocomplete {
@@ -3147,20 +3144,19 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
   box-shadow: var(--pi-shadow-popup);
 }
 
-.thinking-popup {
-  width: 320px;
-}
-
 .permission-popup {
-  width: 300px;
+  /* VS Code sidebars can be ~230px — never let a fixed width clip. */
+  width: min(300px, calc(100vw - 16px));
 }
 
 .autocomplete {
-  width: 340px;
+  /* left:8px/right:8px insets + fluid width: fills the panel, capped at 340. */
+  width: auto;
+  max-width: 340px;
 }
 
 .model-popup {
-  min-width: 300px;
+  min-width: min(300px, calc(100vw - 16px));
 }
 
 .picker-title {
@@ -3209,11 +3205,6 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
 
 .permission-item.selected .permission-item-icon {
   color: var(--pi-icon-brand);
-}
-
-.model-item-check,
-.thinking-item-check {
-  color: var(--pi-brand);
 }
 
 .model-item-label,
@@ -3963,11 +3954,13 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
  * the pill's own gap does that job. */
 .model-icon-slot {
   margin-left: 0;
+  flex-shrink: 0;
 }
 
 .permission-icon {
   margin-left: 0;
   font-size: 16px;
+  flex-shrink: 0;
 }
 
 .thinking-icon {
@@ -4010,9 +4003,7 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
 /* ── popups: the icons inside them were a size down as well ──────────────── */
 
 .model-item-icon,
-.permission-item-icon,
-.thinking-item-check,
-.model-item-check {
+.permission-item-icon {
   font-size: 16px;
 }
 
@@ -4042,31 +4033,81 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
  * "...fla…". Collapsing at 720px threw away room the bar actually had; 560px
  * is where the labels genuinely stop fitting. */
 @media (max-width: 560px) {
-  .model-trigger-label,
-  .permission-trigger-label {
-    display: none;
-  }
-
-  .model-trigger,
+  /* Permission floors at the "+" button's size, so down here it wears the
+   * same chip look (borderless subtle fill, centred content). Its WIDTH is
+   * not set — it keeps flowing from flex with the label ellipsising, so
+   * nothing snaps at this breakpoint. The model picker is untouched: it
+   * keeps its pill and shows the current model name at every width. */
   .permission-trigger {
     justify-content: center;
-    width: 30px;
-    padding: 0;
-    gap: 0;
+    padding: 0 4px;
+    border: none;
+    border-radius: var(--pi-r-md);
+    background: var(--pi-bg-subtle);
+    color: var(--pi-icon);
   }
 
-  /* The model icon carries the provider colour, so it is the one thing worth
-   * keeping at full strength when the label is gone. */
-  .model-icon-avatar,
-  .model-icon-avatar svg {
-    width: 18px;
-    height: 18px;
+  .permission-trigger:hover {
+    color: var(--pi-text);
+  }
+}
+
+/* VS Code's practical minimum sidebar (~230px): the composer chrome alone
+ * (8px outer padding + 10px box padding + borders) eats ~38px, which would
+ * force the model name out. Tighten the chrome instead — the ring and send
+ * each give back a couple of px, the spacer's 4px floor goes to 0, and the
+ * model pill keeps a 70px floor (icon + ~5 ellipsised characters). */
+@media (max-width: 300px) {
+  .composer {
+    padding: 6px;
+  }
+
+  .composer-box {
+    padding: 6px 6px 8px;
+  }
+
+  .composer-controls-bar {
+    gap: 1px;
+  }
+
+  .composer-spacer {
+    min-width: 0;
+  }
+
+  .composer-controls-bar > .model-wrap {
+    min-width: 70px;
+  }
+
+  .ctx-ring {
+    width: 24px;
+    height: 24px;
+  }
+
+  .send-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* VS Code's sidebar can be dragged down to ~230px (workbench floor is ~170px).
+ * The two-column hint grid is ~306px of nowrap content, so below ~380px it
+ * centers into a clipped mess — drop to one centered column and give the
+ * empty block's side padding back. */
+@media (max-width: 380px) {
+  .empty {
+    padding: 32px 12px;
+  }
+
+  .empty-hints {
+    grid-template-columns: auto;
+    gap: 6px;
+    justify-content: center;
   }
 }
 
 /* ── thinking row inside the model popup ──────────────────────────────────
  * The level picker is no longer a pill in the control bar: it is the last row
- * of the model popup and opens a second-level panel beside it, so the bar
+ * of the model popup and expands an inline panel below itself, so the bar
  * keeps its room for the model and permission labels.
  * ------------------------------------------------------------------------ */
 
@@ -4120,27 +4161,21 @@ body.ctrl-key .tool-block[data-has-file] > .tool-head:hover {
   color: var(--pi-text-secondary);
 }
 
-.thinking-row-arrow {
+.thinking-row-gear {
   flex: 0 0 auto;
   font-size: 14px;
   color: var(--pi-icon-muted);
+  transition: color 0.12s;
+}
+
+.thinking-wrap.is-open .thinking-row-gear {
+  color: var(--pi-brand);
 }
 
 .model-popup .thinking-icon {
   flex: 0 0 auto;
   font-size: 16px;
   color: var(--pi-icon);
-}
-
-/* The panel opens beside the model popup (positionThinkingPopup), so it has to
- * out-rank its parent and carry the larger popup radius. */
-.model-popup .thinking-popup {
-  z-index: 70;
-  min-width: 200px;
-  max-width: 260px;
-  padding: var(--pi-sp-3);
-  border-radius: var(--pi-r-lg);
-  box-shadow: var(--pi-shadow-popup);
 }
 
 /* ── boot splash v2 ────────────────────────────────────────────────────────

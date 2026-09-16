@@ -129,8 +129,8 @@ export const thinkingTrigger = document.getElementById("thinking-trigger") as HT
 export const thinkingTriggerLabel = document.getElementById("thinking-trigger-label")!;
 /** Static "thinking effort" caption on the row inside the model popup. */
 export const thinkingRowLabel = document.getElementById("thinking-row-label")!;
-export const thinkingPopup = document.getElementById("thinking-popup")!;
-export const thinkingTitle = document.getElementById("thinking-title")!;
+/** Inline expand/collapse panel under the thinking row — no second popup. */
+export const thinkingPanel = document.getElementById("thinking-panel")!;
 export const thinkingList = document.getElementById("thinking-list")!;
 export const permissionWrap = document.getElementById("permission-wrap")!;
 export const permissionTrigger = document.getElementById("permission-trigger") as HTMLButtonElement;

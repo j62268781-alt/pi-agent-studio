@@ -108,14 +108,23 @@
                      the control bar; it lives here now so the bar can keep its
                      room for the model and permission labels. -->
                 <div class="select-wrap thinking-wrap" id="thinking-wrap">
-                  <button id="thinking-trigger" class="thinking-trigger" type="button">
+                  <button
+                    id="thinking-trigger"
+                    class="thinking-trigger"
+                    type="button"
+                    aria-expanded="false"
+                  >
                     <span class="codicon codicon-sparkle thinking-icon"></span>
                     <span class="thinking-row-label" id="thinking-row-label"></span>
                     <span class="thinking-trigger-label" id="thinking-trigger-label"></span>
-                    <span class="codicon codicon-chevron-right thinking-row-arrow"></span>
+                    <!-- The gear at the far right is the expand affordance; the
+                         whole row toggles the inline panel below it. -->
+                    <span
+                      class="codicon codicon-settings-gear thinking-row-gear"
+                      aria-hidden="true"
+                    ></span>
                   </button>
-                  <div class="thinking-popup" id="thinking-popup" style="display: none">
-                    <div class="picker-title" id="thinking-title"></div>
+                  <div class="thinking-panel" id="thinking-panel" style="display: none">
                     <div class="thinking-list" id="thinking-list"></div>
                   </div>
                 </div>

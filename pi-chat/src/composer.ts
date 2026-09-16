@@ -26,8 +26,7 @@ import {
   thinkingTrigger,
   thinkingTriggerLabel,
   thinkingRowLabel,
-  thinkingPopup,
-  thinkingTitle,
+  thinkingPanel,
   thinkingList,
   ICON_CHECK,
   permissionWrap,
@@ -111,15 +110,9 @@ function isFavorite(m: any): boolean {
   return enabledModelKeys.has(modelKey(m).toLowerCase());
 }
 
-const modelMeasurer = document.createElement("span");
-modelMeasurer.style.cssText =
-  "position:absolute;visibility:hidden;white-space:pre;font-family:var(--pi-font);font-size: var(--chat-fs-12);";
-document.body.appendChild(modelMeasurer);
-
-function fitModelTrigger() {
-  modelMeasurer.textContent = modelTriggerLabel.textContent || "";
-  modelTrigger.style.width = modelMeasurer.offsetWidth + 18 + "px";
-}
+/* The model pill hugs its content (CSS max-width caps it at 240px); no JS
+ * width pinning — an inline width would fight the bar's flex shrinking and
+ * snap the pill instead of letting the label ellipsize smoothly. */
 
 let modelPopupOpen = false;
 let modelQuery = "";
@@ -218,11 +211,7 @@ function renderModelList() {
     label.textContent = modelLabel(m);
     item.appendChild(iconSlot);
     item.appendChild(label);
-    if (state.model && m.provider === state.model.provider && m.id === state.model.id) {
-      const check = el("span", "model-item-check");
-      check.innerHTML = ICON_CHECK;
-      item.appendChild(check);
-    }
+    // Current model is marked by colour (see .model-item.active), not a check.
     const star = el("button", "model-star" + (isFavorite(m) ? " is-on" : ""));
     star.type = "button";
     star.setAttribute("data-i", String(i));
@@ -250,7 +239,6 @@ function renderModels() {
   // Mirrored onto the button so the narrow-composer mode — label hidden, icon
   // only — still reveals which model is active on hover.
   modelTrigger.title = modelTriggerLabel.textContent || "";
-  fitModelTrigger();
   updateModelIcon();
   if (modelPopupOpen) renderModelList();
 }
@@ -270,7 +258,9 @@ function updateModelIcon() {
 
 function positionModelPopup() {
   const r = modelWrap.getBoundingClientRect();
-  modelPopup.style.minWidth = Math.max(260, r.width) + "px";
+  // Cap to the viewport: VS Code sidebars go down to ~230px, where the
+  // 260px design floor would clip the popup off the right edge.
+  modelPopup.style.minWidth = Math.min(window.innerWidth - 16, Math.max(260, r.width)) + "px";
   modelPopup.style.left = "";
   modelPopup.style.right = "";
   const pw = modelPopup.offsetWidth;
@@ -316,6 +306,7 @@ function closeModelPopup() {
   if (!modelPopupOpen) return;
   modelPopupOpen = false;
   modelPopup.style.display = "none";
+  closeThinkingPanel();
   modelWrap.classList.remove("is-open");
   document.removeEventListener("mousedown", onModelPopupOutside);
 }
@@ -351,7 +342,7 @@ const THINKING_DESCRIPTIONS: Record<string, string> = {
 };
 const FALLBACK_THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
 
-let thinkingPopupOpen = false;
+let thinkingPanelOpen = false;
 
 function availableThinkingLevels(): string[] {
   return thinkingLevels.length ? thinkingLevels : FALLBACK_THINKING_LEVELS;
@@ -387,76 +378,39 @@ function renderThinkingList() {
     desc.textContent = t(THINKING_DESCRIPTIONS[level] || level);
     text.appendChild(title);
     text.appendChild(desc);
-    const check = el("span", "thinking-item-check");
-    check.innerHTML = ICON_CHECK;
+    // Selection is colour-only (brand row + brand ink) — no check icon.
     item.appendChild(text);
-    item.appendChild(check);
     thinkingList.appendChild(item);
   }
 }
 
-/** The thinking row is the model popup's last item, so a panel below it would
- * run off the bottom of the window. Open beside the model popup instead,
- * preferring whichever side has room, and fall back to below only when neither
- * fits. */
-function positionThinkingPopup() {
-  const r = thinkingWrap.getBoundingClientRect();
-  const popup = modelPopup.getBoundingClientRect();
-  const margin = 8;
-  thinkingPopup.style.minWidth = "200px";
-  const pw = thinkingPopup.offsetWidth;
-  const ph = thinkingPopup.offsetHeight || 240;
-
-  let left: number | null = null;
-  if (popup.right + pw + margin <= window.innerWidth) left = popup.width + 6;
-  else if (popup.left - pw - margin >= 0) left = -pw - 6;
-
-  if (left === null) {
-    thinkingPopup.style.left = "0px";
-    thinkingPopup.style.top = r.height + POPUP_Y_GAP + "px";
-    thinkingPopup.style.bottom = "";
-  } else {
-    thinkingPopup.style.left = left + "px";
-    thinkingPopup.style.top = "";
-    // Bottom-aligned with the row; a negative `bottom` slides the panel down
-    // when there is not enough room above the row.
-    thinkingPopup.style.bottom = Math.min(0, r.bottom - ph - margin) + "px";
-  }
-  thinkingPopup.style.right = "";
-}
-
-function openThinkingPopup() {
-  if (thinkingPopupOpen) return;
-  thinkingPopupOpen = true;
-  thinkingTitle.textContent = t("Thinking level");
+function openThinkingPanel() {
+  if (thinkingPanelOpen) return;
+  thinkingPanelOpen = true;
   renderThinkingList();
-  thinkingPopup.style.display = "block";
-  positionThinkingPopup();
+  thinkingPanel.style.display = "block";
   thinkingWrap.classList.add("is-open");
-  document.addEventListener("mousedown", onThinkingPopupOutside);
+  thinkingTrigger.setAttribute("aria-expanded", "true");
+  // The popup grows when the panel expands — re-measure so it flips above the
+  // trigger instead of running off the bottom of the window.
+  positionModelPopup();
 }
 
-function closeThinkingPopup() {
-  if (!thinkingPopupOpen) return;
-  thinkingPopupOpen = false;
-  thinkingPopup.style.display = "none";
+function closeThinkingPanel() {
+  if (!thinkingPanelOpen) return;
+  thinkingPanelOpen = false;
+  thinkingPanel.style.display = "none";
   thinkingWrap.classList.remove("is-open");
-  document.removeEventListener("mousedown", onThinkingPopupOutside);
+  thinkingTrigger.setAttribute("aria-expanded", "false");
 }
 
-function onThinkingPopupOutside(ev: MouseEvent) {
-  const target = ev.target as HTMLElement;
-  if (target && (target === thinkingWrap || thinkingWrap.contains(target))) return;
-  closeThinkingPopup();
-}
-
-function toggleThinkingPopup() {
-  if (thinkingPopupOpen) closeThinkingPopup();
-  else openThinkingPopup();
+function toggleThinkingPanel() {
+  if (thinkingPanelOpen) closeThinkingPanel();
+  else openThinkingPanel();
 }
 
 function selectThinking(level: string) {
-  closeThinkingPopup();
+  closeThinkingPanel();
   thinkingTriggerLabel.textContent = level;
   thinkingTrigger.title = t("Thinking effort") + ": " + level;
   vscode.postMessage({ type: "setThinking", level: level });
@@ -464,7 +418,7 @@ function selectThinking(level: string) {
 
 function renderThinking() {
   renderThinkingLabel();
-  if (thinkingPopupOpen) renderThinkingList();
+  if (thinkingPanelOpen) renderThinkingList();
 }
 
 // ---- permission picker (popup card) ----
@@ -546,7 +500,7 @@ function renderPermissionList() {
 
 function positionPermissionPopup() {
   const r = permissionWrap.getBoundingClientRect();
-  permissionPopup.style.minWidth = Math.max(250, r.width) + "px";
+  permissionPopup.style.minWidth = Math.min(window.innerWidth - 16, Math.max(250, r.width)) + "px";
   permissionPopup.style.left = "";
   permissionPopup.style.right = "";
   const pw = permissionPopup.offsetWidth;
@@ -708,7 +662,8 @@ function positionSessionsPopup() {
   // panel it opens in — the old Math.max(300, …) floor forced a 360px popup
   // into a ~300px sidebar and clipped it off the right edge.
   const available = window.innerWidth - margin * 2;
-  sessionsPopup.style.minWidth = Math.min(360, Math.max(240, r.width)) + "px";
+  sessionsPopup.style.minWidth =
+    Math.min(window.innerWidth - 16, 360, Math.max(240, r.width)) + "px";
   sessionsPopup.style.maxWidth = available + "px";
   sessionsPopup.style.left = "";
   sessionsPopup.style.right = "";
@@ -1581,7 +1536,7 @@ modelSearch.addEventListener("keydown", function (ev: KeyboardEvent) {
 
 thinkingTrigger.addEventListener("click", function (ev) {
   ev.stopPropagation();
-  toggleThinkingPopup();
+  toggleThinkingPanel();
 });
 
 thinkingList.addEventListener("click", function (ev) {
