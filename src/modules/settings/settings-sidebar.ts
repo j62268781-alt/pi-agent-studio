@@ -80,10 +80,6 @@ export function createSettingsViewProvider(): vscode.WebviewViewProvider {
                 await vscode.window.showTextDocument(doc);
                 return;
               }
-
-              case "upgrade":
-                await vscode.commands.executeCommand("pi-agent-studio.upgrade");
-                return;
             }
           } catch (err) {
             webviewView.webview.postMessage({

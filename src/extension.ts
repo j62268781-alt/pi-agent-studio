@@ -8,7 +8,7 @@ import type { BridgeConfig } from "./bridge/types.ts";
 import { isAbsolutePath } from "./bridge/utils.ts";
 import { TERMINAL_TITLE } from "./constants.ts";
 import { t } from "./i18n.ts";
-import { upgradePiBinary, invalidatePiBinaryCache } from "./pi.ts";
+import { invalidatePiBinaryCache } from "./pi.ts";
 import { resolveUiMode } from "./ui-mode.ts";
 import { createChatTracker } from "./modules/chat/chat-tracker.ts";
 import { disposeRpcTrace } from "./modules/chat/rpc-trace.ts";
@@ -120,15 +120,6 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.workspace.registerTextDocumentContentProvider("pi-rewind", rewindProvider),
   );
 
-  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBarItem.text = "$(pi-logo)";
-  statusBarItem.command = "pi-agent-studio.openSettings";
-  const updateStatusBarTooltip = () => {
-    statusBarItem.tooltip = t("Open Pi Settings");
-  };
-  updateStatusBarTooltip();
-  statusBarItem.show();
-
   const applyBridgeSetting = async () => {
     const value = vscode.workspace
       .getConfiguration("pi-agent-studio")
@@ -152,14 +143,12 @@ export async function activate(context: vscode.ExtensionContext) {
       );
       return;
     }
-    const { config, fellBackReason } = await startBridge(context);
+    await startBridge(context);
   };
 
   context.subscriptions.push(
-    statusBarItem,
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("pi-agent-studio.path")) invalidatePiBinaryCache();
-      if (event.affectsConfiguration("pi-agent-studio.language")) updateStatusBarTooltip();
       if (!event.affectsConfiguration(BRIDGE_SETTING)) return;
       // Settings UI commits on every keystroke; restart only after the value
       // settles so typing does not churn the bridge.
@@ -204,7 +193,6 @@ export async function activate(context: vscode.ExtensionContext) {
       const { openSidebarChat } = await import("./modules/chat/chat-sidebar.ts");
       await openSidebarChat({ extensionUri, bridgeConfig });
     }),
-    vscode.commands.registerCommand("pi-agent-studio.upgrade", upgradePiBinary),
     vscode.commands.registerCommand("pi-agent-studio.openSettings", async (tab?: string) => {
       const { openSettingsPanel } = await import("./modules/settings/settings-panel.ts");
       await openSettingsPanel(extensionUri, tab);

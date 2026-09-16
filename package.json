@@ -79,15 +79,7 @@
     "commands": [
       {
         "command": "pi-agent-studio.open",
-        "title": "%pi.cmd.open%",
-        "icon": {
-          "light": "assets/logo-light.svg",
-          "dark": "assets/logo.svg"
-        }
-      },
-      {
-        "command": "pi-agent-studio.upgrade",
-        "title": "%pi.cmd.upgrade%"
+        "title": "%pi.cmd.open%"
       },
       {
         "command": "pi-agent-studio.openSettingsJson",
@@ -152,12 +144,6 @@
       }
     ],
     "menus": {
-      "editor/title": [
-        {
-          "command": "pi-agent-studio.open",
-          "group": "navigation"
-        }
-      ],
       "editor/context": [
         {
           "command": "pi-agent-studio.addSelectionToChat",
@@ -298,11 +284,6 @@
           "pattern": "^$|^[^/]+/.+$",
           "patternErrorMessage": "%pi.config.commitModel.patternError%",
           "description": "%pi.config.commitModel.desc%"
-        },
-        "pi-agent-studio.statusBar": {
-          "type": "boolean",
-          "default": true,
-          "description": "%pi.config.statusBar.desc%"
         },
         "pi-agent-studio.ui": {
           "type": "string",
