@@ -1,4 +1,5 @@
 packages:
+  - pi-ui
   - pi-chat
   - pi-settings
 

@@ -3,6 +3,7 @@
 !dist/chunks/**/*.cjs
 !dist/webview.js
 !dist/webview.css
+!pi-ui/tokens.css
 !l10n/**
 !assets/fonts/**
 !assets/icon.png

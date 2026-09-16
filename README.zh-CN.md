@@ -6,6 +6,11 @@
 > 本 fork **同样会持续维护**。它针对单机工作流做了定制，因此与上游存在若干差异 —— 详见下方[本 fork 的改动](#本-fork-的改动)。
 > **欢迎在本仓库提 issue 或功能需求** —— 我会跟进，也乐意帮你把需要的功能做出来。
 > 如果你要找面向通用场景的版本，上游仍然是更好的默认选择。
+>
+> [!WARNING]
+> **本仓库现在是精简版本：只提供侧栏 webview UI。** 终端（TUI）界面模式、终端绑定的会话以及
+> 所有仅面向 TUI 的设置均已移除，webview 界面也已按专门的设计系统重建。
+> 下文中描述终端行为的章节仅适用于上游版本，对本 fork 无效。
 
 <div align="center">
 
@@ -13,7 +18,7 @@
 
 # Pi Agent Studio
 
-**面向 [pi coding agent](https://pi.dev/) 的功能丰富的 VS Code 扩展 -- 原生终端 TUI 或 webview 聊天面板、完整编辑器桥接，开箱即用内置 pi 扩展（todo / subagent ...），并配套会话侧边栏与涵盖模型、Agents、设置等的完整设置面板** 🔥
+**面向 [pi coding agent](https://pi.dev/) 的精简版 VS Code 扩展 -- 只做 webview 聊天界面（侧栏视图或编辑器面板），配套涵盖模型、Agents 等的完整设置面板** 🔥
 
 [English](README.md) | 简体中文
 
@@ -26,7 +31,7 @@
 
 ## 本 fork 的改动
 
-相对上游共 6 项有意为之的差异。每项都尽量做小，以便从上游同步的成本保持在低位 ——
+相对上游共 7 项有意为之的差异。同步上游已不再是目标 —— 本仓库是独立的精简产品，但每项差异仍然记录在案：
 完整的原因、涉及的文件路径与验证方式都记在 [`AGENTS.md`](AGENTS.md) 的 **"Fork changes vs upstream"** 一节。
 
 | #   | 改动                                                                                                                                                     | 原因                                                                            |
@@ -37,6 +42,7 @@
 | 4   | **设置 → Agents 不再声称存在内置来源**                                                                                                                   | 内置 agent 已不再加载，继续标为 built-in 还会导致无法创建同名 agent             |
 | 5   | **模型 / 思考深度 / 权限审批选择器在窄侧边栏下保持可见**                                                                                                 | 上游在 640px / 420px 以下把它们隐藏了 —— 而侧边栏默认约 300px，三个全被藏起来   |
 | 6   | **输入框加高**（最小高度 28px → 40px）                                                                                                                   | 28px 视觉上偏矮                                                                 |
+| 7   | **移除终端（TUI）界面模式与全部终端会话功能** —— 扩展只保留侧栏 webview UI，`pi-agent-studio.ui` 仅剩 `webview` / `sidebar`                              | 终端相关链路服务的界面，本 fork 已不再提供                                      |
 
 ### 配套设置（仓库之外）
 
@@ -64,7 +70,6 @@ cp extras/agents/*.md ~/.pi/agent/agents/
 
 ## 特性
 
-- **原生终端 TUI** -- Pi 运行在 VS Code 集成终端（PTY）中。无 shell 层、无引号黑魔法--pi 二进制直接启动（默认模式）
 - **Webview 聊天面板** -- 可选的 `webview` 模式，由 `pi --mode rpc` 子进程驱动的流式聊天面板，配备富文本 `contenteditable` 输入框（`@文件` 提及与 `/命令` 渲染为 token 标签）、提示排队（Enter 转向 / Alt+Enter 追加）、输入历史、Fork/Revert、内置命令与重试
 - **侧边栏聊天视图** —— 同样的聊天 UI 还可以作为 WebviewView 放在独立的 **Pi Chat** 活动栏容器中（`Pi: Open in Sidebar`）：启动会话前显示轻量起始页，每个窗口一个后台会话，视图隐藏 / 重新解析时完整重水合；`pi-agent-studio.ui` 新增 `sidebar` 值，可将 `Pi: Open` / `Open Here` 与 Sessions 视图路由到侧边栏聊天
 - **Mermaid 与数学公式渲染** —— webview 聊天面板将 `mermaid` 代码块渲染为交互式图表，并用 KaTeX 渲染数学公式（`$...$`、`$$...$$`）；图表主题可通过 `pi-agent-studio.chatMermaidTheme` 配置（`default` / `neutral` / `dark` / `forest` / `base`）
@@ -217,7 +222,7 @@ ovsx get johnny-zhao/pi-agent-studio
 | `pi-agent-studio.commitMessagePrompt`          | `string`  | `""`                | commit message 生成的自定义系统提示                                                                            |
 | `pi-agent-studio.commitModel`                  | `string`  | `""`                | commit message 生成所用模型，格式 `provider/model`（如 `Zai/glm-5.2`）                                         |
 | `pi-agent-studio.statusBar`                    | `boolean` | `true`              | 在 pi TUI 底栏显示实时 VS Code 上下文（编辑器、选区、诊断）                                                    |
-| `pi-agent-studio.ui`                           | `string`  | `"terminal"`        | `Pi: Open` 的界面：`terminal`（TUI）、`webview`（聊天面板）或 `sidebar`（侧边栏聊天视图）                      |
+| `pi-agent-studio.ui`                           | `string`  | `"sidebar"`         | `Pi: Open` 的界面：`webview`（聊天面板）或 `sidebar`（侧边栏聊天视图）                                         |
 | `pi-agent-studio.disabledTools`                | `array`   | `[]`                | 可禁用的内置 LLM 工具：`vscode_get_diagnostics`、`todo`、`questionnaire`、`subagent`                           |
 | `pi-agent-studio.rpcTrace`                     | `boolean` | `false`             | 将 RPC 流量与 pi stderr 输出到 "Pi Chat RPC" 输出通道                                                          |
 | `pi-agent-studio.permission.mode`              | `string`  | `"AskForApproval"`  | 危险 bash 命令门禁：`AskForApproval`（执行前询问）或 `FullAccess`                                              |

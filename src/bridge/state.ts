@@ -4,11 +4,7 @@ import type { BridgeState } from "./types.ts";
 const MAX_NOTIFICATIONS = 100;
 const MAX_CODE_ACTIONS = 100;
 
-export function createBridgeState(
-  initialSelection: BridgeState["latestSelection"],
-  onTerminalSession?: (terminalId: string, sessionFile: string) => void,
-  findTerminalSession?: (terminalId: string) => string | undefined,
-): BridgeState {
+export function createBridgeState(initialSelection: BridgeState["latestSelection"]): BridgeState {
   return {
     latestSelection: initialSelection,
     notifications: [],
@@ -29,11 +25,12 @@ export function createBridgeState(
       }
       return id;
     },
-    reportTerminalSession(terminalId, sessionFile) {
-      onTerminalSession?.(terminalId, sessionFile);
-    },
-    findTerminalSession(terminalId) {
-      return findTerminalSession?.(terminalId);
+    // Terminal-run pi instances no longer exist: the terminal UI mode and the
+    // terminal/session tracking were removed. The handlers that consult these
+    // safely ignore the empty results.
+    reportTerminalSession() {},
+    findTerminalSession() {
+      return undefined;
     },
   };
 }

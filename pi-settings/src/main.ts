@@ -1,4 +1,5 @@
 import codiconTtf from "@vscode/codicons/dist/codicon.ttf?inline";
+import "pi-ui/tokens.css";
 import "./style.css";
 import { vscode } from "./globals";
 import { t } from "./i18n";
@@ -23,9 +24,11 @@ if (typeof (window as any).__PI_FONTSIZE__ === "number" && (window as any).__PI_
 }
 
 function initStaticI18n() {
-  const title = document.querySelector(".toolbar-title");
-  if (title) title.textContent = t("Settings");
-  const reload = document.querySelector('.toolbar-btn[data-action="reload"]') as HTMLElement | null;
+  const title = document.querySelector(".nav-title");
+  if (title) title.textContent = t("Pi Settings");
+  const reload = document.querySelector(
+    '.nav-icon-btn[data-action="reload"]',
+  ) as HTMLElement | null;
   if (reload) reload.title = t("Reload");
   const labels: Record<string, string> = {
     models: t("Models"),
@@ -49,36 +52,12 @@ function initStaticI18n() {
 initStaticI18n();
 
 const nav = document.querySelector(".nav")!;
-const navToggle = document.getElementById("nav-toggle");
 let content = document.getElementById("content")!;
 
-const NAV_BREAKPOINT = 640;
-let navCollapsed = false;
-
-function applyNavCollapse() {
-  nav.classList.toggle("collapsed", navCollapsed);
-  const icon = navToggle?.querySelector(".codicon");
-  if (icon) {
-    icon.className = "codicon " + (navCollapsed ? "codicon-chevron-right" : "codicon-chevron-left");
-  }
-  if (navToggle) {
-    navToggle.title = navCollapsed ? t("Expand sidebar") : t("Collapse sidebar");
-  }
-}
-
-navToggle?.addEventListener("click", () => {
-  navCollapsed = !navCollapsed;
-  applyNavCollapse();
-});
-
-const navResizeObserver = new ResizeObserver(() => {
-  const want = document.body.clientWidth < NAV_BREAKPOINT;
-  if (want !== navCollapsed) {
-    navCollapsed = want;
-    applyNavCollapse();
-  }
-});
-navResizeObserver.observe(document.body);
+// No collapse control. The settings UI only ever opens as an editor-area
+// WebviewPanel (see openSettingsPanel), which settings-panel.ts moves into its
+// own window — so the sidebar is never narrow enough to warrant one. Narrow
+// containers get a CSS-only fallback instead; there is no toggle state to keep.
 
 let activeTab = "models";
 const tabData: Record<string, any> = {};
@@ -92,7 +71,7 @@ nav.addEventListener("click", (e) => {
 });
 
 document.addEventListener("click", (e) => {
-  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".toolbar-btn[data-action]");
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".nav-icon-btn[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
   if (action === "reload") vscode.postMessage({ type: "refresh", tab: activeTab });

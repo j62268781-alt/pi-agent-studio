@@ -89,7 +89,7 @@ export const inputEl = document.getElementById("input") as HTMLDivElement;
 export const sendBtn = document.getElementById("send") as HTMLButtonElement;
 export const attachBtn = document.getElementById("attach-btn") as HTMLButtonElement;
 export const attachPreviewEl = document.getElementById("attach-preview")!;
-export const infoBtn = document.getElementById("info-btn") as HTMLButtonElement;
+export const newChatBtn = document.getElementById("new-chat-btn") as HTMLButtonElement;
 export const refreshBtn = document.getElementById("refresh-btn") as HTMLButtonElement;
 export const sessionsWrap = document.getElementById("sessions-wrap")!;
 export const sessionsBtn = document.getElementById("sessions-btn") as HTMLButtonElement;
@@ -127,6 +127,8 @@ export function setPrevTurn(v: any) {
 export const thinkingWrap = document.getElementById("thinking-wrap")!;
 export const thinkingTrigger = document.getElementById("thinking-trigger") as HTMLButtonElement;
 export const thinkingTriggerLabel = document.getElementById("thinking-trigger-label")!;
+/** Static "thinking effort" caption on the row inside the model popup. */
+export const thinkingRowLabel = document.getElementById("thinking-row-label")!;
 export const thinkingPopup = document.getElementById("thinking-popup")!;
 export const thinkingTitle = document.getElementById("thinking-title")!;
 export const thinkingList = document.getElementById("thinking-list")!;
@@ -759,13 +761,14 @@ nameBtn.addEventListener("mouseenter", function () {
 });
 nameBtn.addEventListener("mouseleave", hideTooltip);
 
-infoBtn.addEventListener("click", function () {
-  vscode.postMessage({ type: "prompt", message: "/session" });
+// Back to the "home" state: abandon the current thread and start a fresh one.
+newChatBtn.addEventListener("click", function () {
+  vscode.postMessage({ type: "prompt", message: "/new" });
 });
-infoBtn.addEventListener("mouseenter", function () {
-  showTooltip(infoBtn, t("Session info"));
+newChatBtn.addEventListener("mouseenter", function () {
+  showTooltip(newChatBtn, t("New chat"));
 });
-infoBtn.addEventListener("mouseleave", hideTooltip);
+newChatBtn.addEventListener("mouseleave", hideTooltip);
 
 refreshBtn.addEventListener("click", function () {
   if (state.isStreaming) return;
@@ -800,7 +803,6 @@ nameInput.addEventListener("blur", function () {
 });
 
 // ---- init DOM ----
-infoBtn.innerHTML = ICON_INFO;
 refreshBtn.innerHTML = ICON_REFRESH;
 nameBtn.innerHTML = ICON_EDIT;
 attachBtn.innerHTML = ICON_PLUS;

@@ -1024,14 +1024,14 @@ export function endToolExecution(ev: any) {
       if (added > 0) {
         const m = document.createElement("span");
         m.className = "tool-metrics";
-        m.style.color = "var(--vscode-gitDecoration-addedResourceForeground, #73c991)";
+        m.style.color = "var(--pi-success)";
         m.textContent = "+" + added;
         b.summaryEl.appendChild(m);
       }
       if (removed > 0) {
         const m = document.createElement("span");
         m.className = "tool-metrics";
-        m.style.color = "var(--vscode-gitDecoration-deletedResourceForeground, #f48771)";
+        m.style.color = "var(--pi-danger)";
         m.textContent = "-" + removed;
         b.summaryEl.appendChild(m);
       }
@@ -1051,7 +1051,7 @@ export function endToolExecution(ev: any) {
     if (b._writeLineCount > 0 && b.summaryEl) {
       const m = document.createElement("span");
       m.className = "tool-metrics";
-      m.style.color = "var(--vscode-gitDecoration-addedResourceForeground, #73c991)";
+      m.style.color = "var(--pi-success)";
       m.textContent = "+" + b._writeLineCount;
       b.summaryEl.appendChild(m);
     }
@@ -1659,17 +1659,9 @@ export function formatWorkTitle(
   }
   if (added > 0 || removed > 0) {
     w += "  \u00b7  ";
-    if (added > 0)
-      w +=
-        '<span style="color:var(--vscode-gitDecoration-addedResourceForeground, #73c991)">+' +
-        added +
-        "</span>";
+    if (added > 0) w += '<span style="color:var(--pi-success)">+' + added + "</span>";
     if (added > 0 && removed > 0) w += " ";
-    if (removed > 0)
-      w +=
-        '<span style="color:var(--vscode-gitDecoration-deletedResourceForeground, #f48771)">-' +
-        removed +
-        "</span>";
+    if (removed > 0) w += '<span style="color:var(--pi-danger)">-' + removed + "</span>";
   }
   return w;
 }

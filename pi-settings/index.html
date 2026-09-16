@@ -10,53 +10,46 @@
     </script>
   </head>
   <body>
+    <!-- Window shell per board A (node 2:726): there is no bar spanning the
+         window. The title and the reload control live in the sidebar header. -->
     <div class="app">
-      <div class="toolbar">
-        <span class="toolbar-title">Settings</span>
-        <div class="toolbar-actions">
-          <button class="toolbar-btn" data-action="reload" title="Reload" type="button">
+      <nav class="nav">
+        <div class="nav-head">
+          <span class="nav-title">Pi Settings</span>
+          <button class="nav-icon-btn" data-action="reload" title="Reload" type="button">
             <span class="codicon codicon-refresh"></span>
           </button>
         </div>
-      </div>
-      <div class="app-body">
-        <nav class="nav">
-          <button id="nav-toggle" class="nav-toggle" type="button" title="Collapse sidebar">
-            <span class="codicon codicon-chevron-left"></span>
-          </button>
-          <button class="nav-tab active" data-tab="models" type="button">
-            <span class="codicon codicon-versions"></span><span class="nav-label">Models</span>
-          </button>
-          <button class="nav-tab" data-tab="agents" type="button">
-            <span class="codicon codicon-hubot"></span><span class="nav-label">Agents</span>
-          </button>
-          <button class="nav-tab" data-tab="prompts" type="button">
-            <span class="codicon codicon-quote"></span
-            ><span class="nav-label">Prompt Templates</span>
-          </button>
-          <button class="nav-tab" data-tab="skills" type="button">
-            <span class="codicon codicon-rocket"></span><span class="nav-label">Skills</span>
-          </button>
-          <button class="nav-tab" data-tab="mcp" type="button">
-            <span class="codicon codicon-server"></span><span class="nav-label">MCP Servers</span>
-          </button>
-          <button class="nav-tab" data-tab="commit" type="button">
-            <span class="codicon codicon-git-commit"></span
-            ><span class="nav-label">Commit Message</span>
-          </button>
-          <button class="nav-tab" data-tab="sysprompt" type="button">
-            <span class="codicon codicon-file-text"></span
-            ><span class="nav-label">System Prompt</span>
-          </button>
-          <button class="nav-tab" data-tab="settings" type="button">
-            <span class="codicon codicon-settings-gear"></span
-            ><span class="nav-label">Settings</span>
-          </button>
-        </nav>
-        <main class="content" id="content">
-          <div class="tab-placeholder">Select a tab to get started</div>
-        </main>
-      </div>
+        <button class="nav-tab active" data-tab="models" type="button">
+          <span class="codicon codicon-versions"></span><span class="nav-label">Models</span>
+        </button>
+        <button class="nav-tab" data-tab="agents" type="button">
+          <span class="codicon codicon-hubot"></span><span class="nav-label">Agents</span>
+        </button>
+        <button class="nav-tab" data-tab="prompts" type="button">
+          <span class="codicon codicon-quote"></span><span class="nav-label">Prompt Templates</span>
+        </button>
+        <button class="nav-tab" data-tab="skills" type="button">
+          <span class="codicon codicon-rocket"></span><span class="nav-label">Skills</span>
+        </button>
+        <button class="nav-tab" data-tab="mcp" type="button">
+          <span class="codicon codicon-server"></span><span class="nav-label">MCP Servers</span>
+        </button>
+        <button class="nav-tab" data-tab="commit" type="button">
+          <span class="codicon codicon-git-commit"></span
+          ><span class="nav-label">Commit Message</span>
+        </button>
+        <button class="nav-tab" data-tab="sysprompt" type="button">
+          <span class="codicon codicon-file-text"></span
+          ><span class="nav-label">System Prompt</span>
+        </button>
+        <button class="nav-tab" data-tab="settings" type="button">
+          <span class="codicon codicon-settings-gear"></span><span class="nav-label">Settings</span>
+        </button>
+      </nav>
+      <main class="content" id="content">
+        <div class="tab-placeholder">Select a tab to get started</div>
+      </main>
     </div>
     <script type="module" src="./src/main.ts"></script>
   </body>

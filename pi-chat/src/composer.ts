@@ -25,6 +25,7 @@ import {
   thinkingWrap,
   thinkingTrigger,
   thinkingTriggerLabel,
+  thinkingRowLabel,
   thinkingPopup,
   thinkingTitle,
   thinkingList,
@@ -112,16 +113,12 @@ function isFavorite(m: any): boolean {
 
 const modelMeasurer = document.createElement("span");
 modelMeasurer.style.cssText =
-  "position:absolute;visibility:hidden;white-space:pre;font-family:var(--vscode-font-family);font-size: var(--chat-fs-12);";
+  "position:absolute;visibility:hidden;white-space:pre;font-family:var(--pi-font);font-size: var(--chat-fs-12);";
 document.body.appendChild(modelMeasurer);
 
 function fitModelTrigger() {
   modelMeasurer.textContent = modelTriggerLabel.textContent || "";
   modelTrigger.style.width = modelMeasurer.offsetWidth + 18 + "px";
-}
-function fitThinkingTrigger() {
-  modelMeasurer.textContent = thinkingTriggerLabel.textContent || "";
-  thinkingTrigger.style.width = modelMeasurer.offsetWidth + 18 + "px";
 }
 
 let modelPopupOpen = false;
@@ -250,6 +247,9 @@ function renderModels() {
   } else {
     modelTriggerLabel.textContent = "";
   }
+  // Mirrored onto the button so the narrow-composer mode — label hidden, icon
+  // only — still reveals which model is active on hover.
+  modelTrigger.title = modelTriggerLabel.textContent || "";
   fitModelTrigger();
   updateModelIcon();
   if (modelPopupOpen) renderModelList();
@@ -287,10 +287,10 @@ function positionModelPopup() {
   const ph = modelPopup.offsetHeight || 220;
   const spaceBelow = window.innerHeight - r.bottom;
   if (spaceBelow < ph + 8 && r.top > spaceBelow) {
-    modelPopup.style.bottom = r.height + "px";
+    modelPopup.style.bottom = r.height + POPUP_Y_GAP + "px";
     modelPopup.style.top = "";
   } else {
-    modelPopup.style.top = r.height + "px";
+    modelPopup.style.top = r.height + POPUP_Y_GAP + "px";
     modelPopup.style.bottom = "";
   }
 }
@@ -362,9 +362,13 @@ function currentThinkingLevel(): string {
   return levels.indexOf(state.thinkingLevel) >= 0 ? state.thinkingLevel : levels[0];
 }
 
+/** The thinking row lives inside the model popup, so it is a fixed-width full
+ * row — no measuring, unlike the pills in the control bar. */
 function renderThinkingLabel() {
-  thinkingTriggerLabel.textContent = currentThinkingLevel();
-  fitThinkingTrigger();
+  const level = currentThinkingLevel();
+  thinkingRowLabel.textContent = t("Thinking effort");
+  thinkingTriggerLabel.textContent = level;
+  thinkingTrigger.title = t("Thinking effort") + ": " + level;
 }
 
 function renderThinkingList() {
@@ -391,28 +395,34 @@ function renderThinkingList() {
   }
 }
 
+/** The thinking row is the model popup's last item, so a panel below it would
+ * run off the bottom of the window. Open beside the model popup instead,
+ * preferring whichever side has room, and fall back to below only when neither
+ * fits. */
 function positionThinkingPopup() {
   const r = thinkingWrap.getBoundingClientRect();
-  thinkingPopup.style.minWidth = Math.max(230, r.width) + "px";
-  thinkingPopup.style.left = "";
-  thinkingPopup.style.right = "";
-  const pw = thinkingPopup.offsetWidth;
+  const popup = modelPopup.getBoundingClientRect();
   const margin = 8;
-  let left = 0;
-  if (r.left + pw > window.innerWidth - margin) {
-    left = r.width - pw;
-    if (r.left + left < margin) left = -(r.left - margin);
-  }
-  thinkingPopup.style.left = left + "px";
-  const ph = thinkingPopup.offsetHeight || 280;
-  const spaceBelow = window.innerHeight - r.bottom;
-  if (spaceBelow < ph + 8 && r.top > spaceBelow) {
-    thinkingPopup.style.bottom = r.height + "px";
-    thinkingPopup.style.top = "";
-  } else {
-    thinkingPopup.style.top = r.height + "px";
+  thinkingPopup.style.minWidth = "200px";
+  const pw = thinkingPopup.offsetWidth;
+  const ph = thinkingPopup.offsetHeight || 240;
+
+  let left: number | null = null;
+  if (popup.right + pw + margin <= window.innerWidth) left = popup.width + 6;
+  else if (popup.left - pw - margin >= 0) left = -pw - 6;
+
+  if (left === null) {
+    thinkingPopup.style.left = "0px";
+    thinkingPopup.style.top = r.height + POPUP_Y_GAP + "px";
     thinkingPopup.style.bottom = "";
+  } else {
+    thinkingPopup.style.left = left + "px";
+    thinkingPopup.style.top = "";
+    // Bottom-aligned with the row; a negative `bottom` slides the panel down
+    // when there is not enough room above the row.
+    thinkingPopup.style.bottom = Math.min(0, r.bottom - ph - margin) + "px";
   }
+  thinkingPopup.style.right = "";
 }
 
 function openThinkingPopup() {
@@ -448,7 +458,7 @@ function toggleThinkingPopup() {
 function selectThinking(level: string) {
   closeThinkingPopup();
   thinkingTriggerLabel.textContent = level;
-  fitThinkingTrigger();
+  thinkingTrigger.title = t("Thinking effort") + ": " + level;
   vscode.postMessage({ type: "setThinking", level: level });
 }
 
@@ -490,6 +500,7 @@ function applyPermissionMode(mode: string) {
   const spec = permissionModeSpec(permissionMode);
   const safe = permissionMode === "AskForApproval";
   permissionTriggerLabel.textContent = spec.title;
+  permissionTrigger.title = spec.title;
   permissionTip = safe
     ? t("Ask for approval before running commands")
     : t("Full access: run commands without asking");
@@ -549,10 +560,10 @@ function positionPermissionPopup() {
   const ph = permissionPopup.offsetHeight || 220;
   const spaceBelow = window.innerHeight - r.bottom;
   if (spaceBelow < ph + 8 && r.top > spaceBelow) {
-    permissionPopup.style.bottom = r.height + "px";
+    permissionPopup.style.bottom = r.height + POPUP_Y_GAP + "px";
     permissionPopup.style.top = "";
   } else {
-    permissionPopup.style.top = r.height + "px";
+    permissionPopup.style.top = r.height + POPUP_Y_GAP + "px";
     permissionPopup.style.bottom = "";
   }
 }
@@ -686,13 +697,22 @@ function renderSessionsList() {
   }
 }
 
+/** Breathing room between a trigger and the popup it opens — 10-20px was the
+ * ask; a flush popup reads as covering its own trigger button. */
+const POPUP_Y_GAP = 12;
+
 function positionSessionsPopup() {
   const r = sessionsWrap.getBoundingClientRect();
-  sessionsPopup.style.minWidth = Math.max(300, r.width) + "px";
+  const margin = 8;
+  // The board draws this popup 360px wide, but it must never be wider than the
+  // panel it opens in — the old Math.max(300, …) floor forced a 360px popup
+  // into a ~300px sidebar and clipped it off the right edge.
+  const available = window.innerWidth - margin * 2;
+  sessionsPopup.style.minWidth = Math.min(360, Math.max(240, r.width)) + "px";
+  sessionsPopup.style.maxWidth = available + "px";
   sessionsPopup.style.left = "";
   sessionsPopup.style.right = "";
   const pw = sessionsPopup.offsetWidth;
-  const margin = 8;
   if (r.left + pw > window.innerWidth - margin) {
     let left = r.width - pw;
     if (r.left + left < margin) left = -(r.left - margin);
@@ -701,10 +721,10 @@ function positionSessionsPopup() {
   const ph = sessionsPopup.offsetHeight || 260;
   const spaceBelow = window.innerHeight - r.bottom;
   if (spaceBelow < ph + 8 && r.top > spaceBelow) {
-    sessionsPopup.style.bottom = r.height + "px";
+    sessionsPopup.style.bottom = r.height + POPUP_Y_GAP + "px";
     sessionsPopup.style.top = "";
   } else {
-    sessionsPopup.style.top = r.height + "px";
+    sessionsPopup.style.top = r.height + POPUP_Y_GAP + "px";
     sessionsPopup.style.bottom = "";
   }
 }

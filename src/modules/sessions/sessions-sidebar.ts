@@ -1,19 +1,16 @@
 import { readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative, sep } from "node:path";
-import { randomUUID } from "node:crypto";
 import * as vscode from "vscode";
 import { SessionManager, getAgentDir } from "@earendil-works/pi-coding-agent";
 import type { SessionInfo } from "@earendil-works/pi-coding-agent";
-import { createNewTerminal } from "../terminal.ts";
-import { resolveUiMode } from "../ui-mode.ts";
-import type { BridgeConfig } from "../bridge/types.ts";
-import type { SessionTracker } from "../sessions.ts";
+import { resolveUiMode } from "../../ui-mode.ts";
+import type { BridgeConfig } from "../../bridge/types.ts";
 import { openChatPanel, syncOpenChatSession } from "../chat/chat-panel.ts";
 import type { ChatTracker } from "../chat/chat-tracker.ts";
 import { filterAndSortSessions } from "./session-search.ts";
 import { getSessionsHtml } from "./sessions-sidebar-html.ts";
-import { sessionStatusRegistry } from "../session-status-registry.ts";
-import { t } from "../i18n.ts";
+import { sessionStatusRegistry } from "../../session-status-registry.ts";
+import { t } from "../../i18n.ts";
 
 export interface SessionDir {
   /** Absolute path of the cwd. Used as cache key and as the cwd for new sessions. */
@@ -33,7 +30,6 @@ export interface SessionDir {
 export function createSessionsViewProvider(
   extensionUri: vscode.Uri,
   bridgeConfig: BridgeConfig | undefined,
-  sessionTracker: SessionTracker,
   chatTracker: ChatTracker,
 ): vscode.WebviewViewProvider {
   let sessionDirs: SessionDir[] = [];
@@ -214,22 +210,10 @@ export function createSessionsViewProvider(
             postFiltered(lastSearchQuery);
             break;
           case "new":
-            await openNewSessionInDir(
-              selectedDirPath,
-              extensionUri,
-              bridgeConfig,
-              sessionTracker,
-              chatTracker,
-            );
+            await openNewSessionInDir(selectedDirPath, extensionUri, bridgeConfig, chatTracker);
             break;
           case "open":
-            await openSession(
-              msg.sessionFile,
-              extensionUri,
-              bridgeConfig,
-              sessionTracker,
-              chatTracker,
-            );
+            await openSession(msg.sessionFile, extensionUri, bridgeConfig, chatTracker);
             break;
           case "rename":
             await renameSession(msg.sessionFile, msg.name);
@@ -352,7 +336,6 @@ async function openNewSessionInDir(
   cwd: string | undefined,
   extensionUri: vscode.Uri,
   bridgeConfig: BridgeConfig | undefined,
-  sessionTracker: SessionTracker,
   chatTracker: ChatTracker,
 ): Promise<void> {
   const effectiveCwd = cwd ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -361,62 +344,27 @@ async function openNewSessionInDir(
     return;
   }
   const mode = resolveUiMode();
-  if (mode === "sidebar") {
-    const { openSidebarChat } = await import("../chat/chat-sidebar.ts");
-    await openSidebarChat({ extensionUri, bridgeConfig, newSession: true });
-    return;
-  }
   if (mode === "webview") {
     await openChatPanel({ extensionUri, bridgeConfig, tracker: chatTracker, cwd: effectiveCwd });
     return;
   }
-  const terminalId = randomUUID();
-  const terminal = await createNewTerminal({
-    extensionUri,
-    bridgeConfig,
-    terminalId,
-    cwd: effectiveCwd,
-  });
-  if (terminal) {
-    sessionTracker.track(terminal, terminalId);
-    terminal.show();
-  }
+  const { openSidebarChat } = await import("../chat/chat-sidebar.ts");
+  await openSidebarChat({ extensionUri, bridgeConfig, newSession: true });
 }
 
 async function openSession(
   sessionFile: string,
   extensionUri: vscode.Uri,
   bridgeConfig: BridgeConfig | undefined,
-  sessionTracker: SessionTracker,
   chatTracker: ChatTracker,
 ): Promise<void> {
   const mode = resolveUiMode();
-  if (mode === "sidebar") {
-    const { openSidebarChat } = await import("../chat/chat-sidebar.ts");
-    await openSidebarChat({ extensionUri, bridgeConfig, sessionFile });
-    return;
-  }
   if (mode === "webview") {
     await openChatPanel({ extensionUri, bridgeConfig, tracker: chatTracker, sessionFile });
     return;
   }
-  const existing = sessionTracker.findTerminalBySessionFile(sessionFile);
-  if (existing) {
-    existing.show();
-    return;
-  }
-  const terminalId = randomUUID();
-  const terminal = await createNewTerminal({
-    extensionUri,
-    bridgeConfig,
-    sessionFile,
-    terminalId,
-  });
-  if (terminal) {
-    sessionTracker.track(terminal, terminalId);
-    sessionTracker.update(terminalId, sessionFile);
-    terminal.show();
-  }
+  const { openSidebarChat } = await import("../chat/chat-sidebar.ts");
+  await openSidebarChat({ extensionUri, bridgeConfig, sessionFile });
 }
 
 async function renameSession(sessionFile: string, name: string): Promise<void> {

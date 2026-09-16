@@ -5,8 +5,8 @@ node_modules
 dist
 *.vsix
 pi-chat/src/model-icons-data.ts
-src/chat/chat-dist.html
-src/settings/settings-dist.html
+src/modules/chat/chat-dist.html
+src/modules/settings/settings-dist.html
 bridge/mcp/index.js
 package-lock.json
 .tsconfig.bridge-check.json

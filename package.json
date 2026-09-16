@@ -43,7 +43,7 @@
     "release": "node scripts/release.ts",
     "fmt": "oxlint . --fix && oxfmt .",
     "lint": "oxlint . && oxfmt --check .",
-    "typecheck": "tsgo --noEmit --skipLibCheck && ./typecheck.sh",
+    "typecheck": "tsgo --noEmit --skipLibCheck && ./typecheck.sh && pnpm --filter pi-ui typecheck",
     "test": "pnpm lint && pnpm typecheck"
   },
   "dependencies": {
@@ -307,13 +307,11 @@
         "pi-agent-studio.ui": {
           "type": "string",
           "enum": [
-            "terminal",
             "webview",
             "sidebar"
           ],
           "default": "sidebar",
           "enumDescriptions": [
-            "%pi.config.ui.enumDesc.0%",
             "%pi.config.ui.enumDesc.1%",
             "%pi.config.ui.enumDesc.2%"
           ],

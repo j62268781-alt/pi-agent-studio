@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { t } from "../i18n.ts";
+import { t } from "../../i18n.ts";
 
 const execAsync = promisify(exec);
 const GIT_OUTPUT_LINE_LIMIT = 500;

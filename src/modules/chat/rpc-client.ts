@@ -1,7 +1,7 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { StringDecoder } from "node:string_decoder";
-import { normalizePiSpawnTarget } from "../pi.ts";
+import { normalizePiSpawnTarget } from "../../pi.ts";
 import { rpcTrace, rpcTraceErr } from "./rpc-trace.ts";
 import type {
   ExtensionUiRequest,

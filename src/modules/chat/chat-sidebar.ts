@@ -7,14 +7,13 @@
 // starter screen with a button, or `pi-agent-studio.openInSidebar` is run),
 // so merely opening the container costs nothing.
 
-import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, sep } from "node:path";
+import { sep } from "node:path";
 import * as vscode from "vscode";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import type { SessionInfo } from "@earendil-works/pi-coding-agent";
-import type { BridgeConfig } from "../bridge/types.ts";
-import { getLocale, t } from "../i18n.ts";
+import type { BridgeConfig } from "../../bridge/types.ts";
+import { getLocale, t } from "../../i18n.ts";
 import { getChatWebviewHtml, resolveChatBackground } from "./chat-webview.ts";
 import { createChatSession, type ChatHost, type ChatSession } from "./chat-session.ts";
 
@@ -90,92 +89,6 @@ function getChatHtml(webview: vscode.Webview): string {
     cfg.get<string>("chatSendShortcut"),
     vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
   );
-}
-
-/** Fork change: the old "Start Chat" page is now a loading screen. The session auto-starts, so
- * this only shows for the ~1s the RPC subprocess needs to boot (plus a retry affordance if
- * starting fails). It hands off to the in-webview boot splash (index.html #boot-splash), which
- * stays up until the history has rendered — same π badge and dots on both. */
-function getLoadingHtml(extensionUri: vscode.Uri): string {
-  const zh = getLocale() === "zh-cn";
-  const nonce = "loader" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-  // Never let a missing asset take the whole view down (the packaged vsix must list
-  // assets/icon.svg in .vscodeignore; if it is absent anyway, fall back to a text glyph).
-  let logoSvg = "";
-  try {
-    logoSvg = readFileSync(join(extensionUri.fsPath, "assets", "icon.svg"), "utf8");
-  } catch {
-    logoSvg = "";
-  }
-  const logo = logoSvg || `<span style="font-size:34px;font-weight:600;font-style:italic">π</span>`;
-  return `<!DOCTYPE html>
-<html lang="${zh ? "zh-cn" : "en"}">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';" />
-<style>
-html, body { height: 100%; }
-body {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 18px; margin: 0; padding: 24px; box-sizing: border-box;
-  background: var(--vscode-sideBar-background);
-  color: var(--vscode-foreground);
-  font-family: var(--vscode-font-family); font-size: var(--vscode-font-size);
-}
-.logo { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
-.logo svg { width: 100%; height: 100%; display: block; border-radius: 14px; }
-.dots { display: flex; gap: 7px; }
-.dots span {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--vscode-descriptionForeground);
-  animation: pi-dot 1.2s infinite ease-in-out;
-}
-.dots span:nth-child(2) { animation-delay: 0.15s; }
-.dots span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes pi-dot {
-  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
-  40% { opacity: 1; transform: translateY(-5px); }
-}
-.hint { font-size: 12px; color: var(--vscode-descriptionForeground); }
-.error { display: none; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-.error .msg { font-size: 12px; color: var(--vscode-errorForeground); max-width: 360px; line-height: 1.5; }
-.error button {
-  padding: 5px 14px;
-  background: var(--vscode-button-background); color: var(--vscode-button-foreground);
-  border: none; border-radius: 2px; cursor: pointer; font-family: inherit; font-size: 12px;
-}
-.error button:hover { background: var(--vscode-button-hoverBackground); }
-</style>
-</head>
-<body>
-<div class="logo">${logo}</div>
-<div class="dots" id="dots"><span></span><span></span><span></span></div>
-<div class="hint" id="hint">${zh ? "正在启动会话…" : "Starting session…"}</div>
-<div class="error" id="error">
-  <div class="msg" id="error-msg"></div>
-  <button id="retry">${zh ? "重试" : "Retry"}</button>
-</div>
-<script nonce="${nonce}">
-const vscode = acquireVsCodeApi();
-document.getElementById("retry").addEventListener("click", () => {
-  document.getElementById("error").style.display = "none";
-  document.getElementById("dots").style.display = "flex";
-  document.getElementById("hint").style.display = "block";
-  vscode.postMessage({ type: "startSession" });
-});
-window.addEventListener("message", (ev) => {
-  const d = ev.data;
-  if (d && d.type === "sessionFailed") {
-    document.getElementById("dots").style.display = "none";
-    document.getElementById("hint").style.display = "none";
-    document.getElementById("error-msg").textContent = d.message || "Failed to start session.";
-    document.getElementById("error").style.display = "flex";
-  }
-});
-</script>
-</body>
-</html>`;
 }
 
 function makeHost(webviewView: vscode.WebviewView): ChatHost {
@@ -259,7 +172,9 @@ async function startSidebarSession(
     return;
   }
   if (!session || sidebarState?.view !== webviewView) return;
-  webviewView.webview.html = getChatHtml(webviewView.webview);
+  // The view already shows the chat UI — resolveWebviewView hands it over
+  // unconditionally — so re-assigning the html here would reload the webview
+  // and restart the boot splash in the middle of starting up.
   session.attach(host);
 }
 
@@ -282,9 +197,9 @@ export function createChatSidebarViewProvider(
         enableScripts: true,
         retainContextWhenHidden: true,
       } as vscode.WebviewOptions & { retainContextWhenHidden?: boolean };
-      webviewView.webview.html = sidebarState?.session
-        ? getChatHtml(webviewView.webview)
-        : getLoadingHtml(opts.extensionUri);
+      // Always hand over the real chat UI immediately: its boot splash covers
+      // the whole startup (board G W5), so there is no separate loading page.
+      webviewView.webview.html = getChatHtml(webviewView.webview);
 
       const host = makeHost(webviewView);
       currentHost = host;
@@ -313,8 +228,6 @@ export function createChatSidebarViewProvider(
           if (sidebarState?.session) {
             webviewView.webview.html = getChatHtml(webviewView.webview);
             sidebarState.session.attach(host);
-          } else if (sidebarState?.view === webviewView) {
-            webviewView.webview.html = getLoadingHtml(opts.extensionUri);
           }
         }
       });

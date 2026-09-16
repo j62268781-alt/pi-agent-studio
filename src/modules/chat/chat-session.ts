@@ -7,9 +7,8 @@ import { homedir } from "node:os";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import * as vscode from "vscode";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
-import type { BridgeConfig } from "../bridge/types.ts";
-import { createRpcEnvironment, createRpcShellArgs, ensurePiBinary } from "../pi.ts";
-import { getGitBranch } from "../gitCommit/gitUtils.ts";
+import type { BridgeConfig } from "../../bridge/types.ts";
+import { createRpcEnvironment, createRpcShellArgs, ensurePiBinary } from "../../pi.ts";
 import { readEnabledModelKeys, toggleFavoriteModel } from "../settings/settings-config.ts";
 import type {
   ExtensionUiRequest,
@@ -205,8 +204,6 @@ export async function createChatSession(
   let needsSessionFile = !opts.sessionFile;
   let sessionName: string | undefined;
   let currentSessionFile = opts.sessionFile;
-  let cachedBranch: string | undefined;
-  let branchResolved = false;
   let streaming = false;
   let switchedSession = false;
   let historyLoaded = false;
@@ -250,20 +247,13 @@ export async function createChatSession(
 
   async function sendSessionInfo(): Promise<void> {
     if (sessionDisposed) return;
-    let label = "";
-    if (cwd) {
-      label = shortenHome(cwd);
-      if (!branchResolved) {
-        cachedBranch = await getGitBranch(cwd);
-        branchResolved = true;
-      }
-      if (cachedBranch) label += ` (${cachedBranch})`;
-      if (sessionName) label += ` \u2022 ${sessionName}`;
-    } else if (sessionName) {
-      label = sessionName;
-    }
-    if (!sessionDisposed)
-      host.postMessage({ type: "sessionInfo", label, sessionFile: currentSessionFile ?? null });
+    // The webview toolbar shows only the session name — cwd and branch are
+    // visible in the editor's own UI and read as noise in a chat header.
+    host.postMessage({
+      type: "sessionInfo",
+      label: sessionName || "",
+      sessionFile: currentSessionFile ?? null,
+    });
   }
 
   async function sendContextUsage(): Promise<void> {

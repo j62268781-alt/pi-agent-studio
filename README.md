@@ -8,6 +8,12 @@
 > upstream in a handful of places — see [What this fork changes](#what-this-fork-changes) below.
 > **Issues and feature requests are welcome on this repo** — I'll follow up, and I'm glad to build
 > out a feature you need. For the general-purpose extension, upstream is still the better default.
+>
+> [!WARNING]
+> **This fork is now a slimmed-down edition: it ships the sidebar webview UI only.** The terminal
+> (TUI) UI mode, terminal-bound sessions and every TUI-only setting have been removed, and the webview
+> UI has been rebuilt against a dedicated design system. Sections below that describe terminal-only
+> behaviour are historical.
 
 <div align="center">
 
@@ -15,7 +21,7 @@
 
 # Pi Agent Studio
 
-**A feature-rich VS Code extension for the [pi coding agent](https://pi.dev/) - native terminal TUI or webview chat panel, full editor bridge, and bundled pi extensions (todo, subagent...) out of the box, plus a sessions sidebar and a full settings panel for models, agents, and more** 🔥
+**A slimmed-down VS Code extension for the [pi coding agent](https://pi.dev/) — webview chat UI only (sidebar view or editor panel) with a full settings panel for models, agents and more** 🔥
 
 English | [简体中文](README.zh-CN.md)
 
@@ -28,18 +34,19 @@ English | [简体中文](README.zh-CN.md)
 
 ## What this fork changes
 
-Six deliberate divergences from upstream. Each is kept as small as possible so that syncing from
-upstream stays cheap — the full rationale, exact file paths and verification notes for every one
+Seven deliberate divergences from upstream. Upstream sync is no longer a goal — this repo is its
+own slimmed-down product — but each divergence is still documented — the full rationale, exact file paths and verification notes for every one
 live in [`AGENTS.md`](AGENTS.md) under **"Fork changes vs upstream"**.
 
-| #   | Change                                                                                                                                                                    | Why                                                                                                                 |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Delegates the `subagent` tool to the external [pi-subagents](https://github.com/nicobailon/pi-subagents)** — `pi-agent-studio.disabledTools` defaults to `["subagent"]` | Both extensions register a tool named `subagent`, and pi **exits 1** on that clash, so the bundled one has to yield |
-| 2   | **Chat panel understands pi-subagents' result shape** (`error` / `interrupted` / `timedOut` instead of `stopReason` / `errorMessage`)                                     | Different failure signalling — without it, subagent errors render silently                                          |
-| 3   | **Sidebar shows only the chat panel** — the `pi` activity container and its sessions / settings views are gone, and `pi-agent-studio.ui` defaults to `sidebar`            | One panel, no redundant chrome                                                                                      |
-| 4   | **Settings → Agents stops claiming a built-in source**                                                                                                                    | The bundled agents no longer load, so reporting them as built-in also blocked creating same-name agents             |
-| 5   | **Model / thinking-depth / permission pickers stay visible in narrow sidebars**                                                                                           | Upstream hid them below 640px / 420px — i.e. below the default ~300px sidebar, so all three vanished                |
-| 6   | **Taller composer input** (minimum 28px → 40px)                                                                                                                           | 28px read as cramped                                                                                                |
+| #   | Change                                                                                                                                                                                | Why                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Delegates the `subagent` tool to the external [pi-subagents](https://github.com/nicobailon/pi-subagents)** — `pi-agent-studio.disabledTools` defaults to `["subagent"]`             | Both extensions register a tool named `subagent`, and pi **exits 1** on that clash, so the bundled one has to yield |
+| 2   | **Chat panel understands pi-subagents' result shape** (`error` / `interrupted` / `timedOut` instead of `stopReason` / `errorMessage`)                                                 | Different failure signalling — without it, subagent errors render silently                                          |
+| 3   | **Sidebar shows only the chat panel** — the `pi` activity container and its sessions / settings views are gone, and `pi-agent-studio.ui` defaults to `sidebar`                        | One panel, no redundant chrome                                                                                      |
+| 4   | **Settings → Agents stops claiming a built-in source**                                                                                                                                | The bundled agents no longer load, so reporting them as built-in also blocked creating same-name agents             |
+| 5   | **Model / thinking-depth / permission pickers stay visible in narrow sidebars**                                                                                                       | Upstream hid them below 640px / 420px — i.e. below the default ~300px sidebar, so all three vanished                |
+| 6   | **Taller composer input** (minimum 28px → 40px)                                                                                                                                       | 28px read as cramped                                                                                                |
+| 7   | **Removes the terminal (TUI) UI mode and all terminal-session features** — the extension ships the sidebar webview UI only, and `pi-agent-studio.ui` now offers `webview` / `sidebar` | Terminal plumbing served a UI this fork no longer ships                                                             |
 
 ### Companion setup (outside this repo)
 
@@ -72,7 +79,6 @@ nothing depended on it:
 
 ## Features
 
-- **Native terminal TUI** - Pi runs in a real VS Code integrated terminal (PTY). No shell layer, no quoting hacks - pi is spawned directly (default mode)
 - **Webview chat panel** - Optional `webview` UI mode opens a streaming chat panel backed by a per-panel `pi --mode rpc` subprocess, with a rich `contenteditable` composer (`@file` mentions and `/commands` rendered as token chips), prompt queuing (Enter steer / Alt+Enter follow-up), input history, fork/revert, built-in commands, and retry
 - **Sidebar chat view** — The same chat UI is also available as a **WebviewView** in its own **Pi Chat** activity bar container (`Pi: Open in Sidebar`): a lightweight starter screen shows until you start a session, and one background session per window survives view hide / re-resolve with full state re-hydration. A new `sidebar` value for `pi-agent-studio.ui` routes `Pi: Open` / `Open Here` and the Sessions view to it
 - **Mermaid & math rendering** — The webview chat panel renders `mermaid` code fences as interactive diagrams and math expressions (`$...$`, `$$...$$`) with KaTeX; diagram theme is configurable via `pi-agent-studio.chatMermaidTheme` (`default` / `neutral` / `dark` / `forest` / `base`)
@@ -119,7 +125,7 @@ ovsx get johnny-zhao/pi-agent-studio
 
 | Command                              | Keybinding    | Description                                                                                    |
 | ------------------------------------ | ------------- | ---------------------------------------------------------------------------------------------- |
-| `Pi: Open`                           | `Alt+Shift+P` | Open or focus the pi terminal beside the editor                                                |
+| `Pi: Open`                           | `Alt+Shift+P` | Open or focus the pi chat                                                                      |
 | `Pi: Open in New Window`             | —             | Open pi then move it to a new VS Code window                                                   |
 | `Pi: Open in Sidebar`                | —             | Open the chat UI in the **Pi Chat** sidebar view (starter screen until a session is started)   |
 | `Pi: Open Here`                      | —             | Open a pi terminal in the selected folder (via explorer context menu)                          |
@@ -225,7 +231,7 @@ Example:
 | `pi-agent-studio.commitMessagePrompt`          | `string`  | `""`               | Custom system prompt for commit message generation                                                                                   |
 | `pi-agent-studio.commitModel`                  | `string`  | `""`               | Model used for commit message generation, in `provider/model` format (e.g. `Zai/glm-5.2`)                                            |
 | `pi-agent-studio.statusBar`                    | `boolean` | `true`             | Show live VS Code context (editor, selection, diagnostics) in the pi TUI footer                                                      |
-| `pi-agent-studio.ui`                           | `string`  | `"terminal"`       | UI for `Pi: Open`: `terminal` (TUI), `webview` (chat panel), or `sidebar` (sidebar chat view)                                        |
+| `pi-agent-studio.ui`                           | `string`  | `"sidebar"`        | UI for `Pi: Open`: `webview` (chat panel) or `sidebar` (sidebar chat view)                                                           |
 | `pi-agent-studio.disabledTools`                | `array`   | `[]`               | Bundled LLM tools to disable: `vscode_get_diagnostics`, `todo`, `questionnaire`, `subagent`                                          |
 | `pi-agent-studio.rpcTrace`                     | `boolean` | `false`            | Log RPC traffic and pi stderr to the "Pi Chat RPC" output channel                                                                    |
 | `pi-agent-studio.permission.mode`              | `string`  | `"AskForApproval"` | Gate dangerous bash commands: `AskForApproval` (prompt before execution) or `FullAccess`                                             |

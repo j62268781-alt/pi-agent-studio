@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import { findPiColumn, findUnusedColumn } from "../webview-columns.ts";
+import { findPiColumn, findUnusedColumn } from "../../webview-columns.ts";
 import { homedir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { DefaultResourceLoader, getAgentDir } from "@earendil-works/pi-coding-agent";
 import { getSettingsWebviewHtml } from "./settings-webview.ts";
-import { getLocale, t } from "../i18n.ts";
+import { getLocale, t } from "../../i18n.ts";
 import {
   getAppendSystemPromptPath,
   getSystemPromptPath,

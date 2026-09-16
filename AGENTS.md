@@ -4,11 +4,15 @@ This file provides guidance to Code Agent when working with code in this reposit
 
 **Always keep AGENTS.md updated with project status.**
 
-## Fork changes vs upstream
+## Divergences from upstream
 
-This repo is a personal fork of `johnny-zhao/pi-agent-studio`. Everything listed here is a
-deliberate divergence — **keep this the single source of truth** so upstream syncs stay small.
-Each entry names the file and the reason, so a merge conflict is a two-line decision.
+> **Upstream sync is no longer a goal (decided 2026-09-16).** This repo started as a fork of
+> `johnny-zhao/pi-agent-studio` but is now its own product: structure, styling and features are
+> being taken from the Ardot design file, not from upstream. Do not contort a change to keep a
+> merge cheap, and do not "preserve" upstream code that has no call site.
+>
+> This section is kept as the changelog of deliberate divergences — still the single source of
+> truth for _why_ something differs. Each entry names the file and the reason.
 
 ### 1. Delegate `subagent` to the external `pi-subagents` (2026-09-15)
 
@@ -127,6 +131,68 @@ Each entry names the file and the reason, so a merge conflict is a two-line deci
     posts `/mcp status`, which arrives as a multi-line toast (`.toast` has `white-space: pre-wrap`,
     so it renders fine).
 
+### 8. Shared `pi-ui` workspace package: design tokens + DOM primitives (2026-09-16)
+
+- New workspace member `pi-ui/` — **source-only, no build step**:
+  - `tokens.css` — the `--pi-*` design token layer. Light values on `:root`; dark overrides under
+    `body.vscode-dark, body.vscode-high-contrast, html[data-pi-theme="dark"]`. Deliberately contains
+    **no font sizes** — those stay owned by `--fs` (pi-settings) / `--chat-fs` (pi-chat), both driven
+    by `pi-agent-studio.chatFontSize`.
+  - `src/dom.ts` — `el`, `escHtml`/`escAttr`, `delegate`. These are what upstream duplicated: `escHtml`
+    alone exists **8 times** inside `pi-settings` (plus `escAttr` a 9th), `showError` 5 times,
+    `badgeClass` 3 times.
+  - `src/popup.ts` — `createPopup({wrap, popup, minWidth, gap, prefer})`. Upstream carries **four**
+    near-identical copies of measure / right-align-on-overflow / flip-vertically / close-on-outside-click
+    in `pi-chat/src/composer.ts` (model, thinking, permission, sessions popups) plus the same
+    positioning logic again in `pi-chat/src/rewind.ts`.
+- `pnpm-workspace.yaml` adds `pi-ui`; `pi-chat` and `pi-settings` both declare `"pi-ui": "workspace:*"`;
+  both `main.ts` import `pi-ui/tokens.css` **before** their own `./style.css`.
+- Root `typecheck` now chains `pnpm --filter pi-ui typecheck`. `tsgo` alone would not see the package:
+  it has no build step, and `popup.ts` is not imported by anything yet — only each consumer's own
+  `tsc` follows imports into `pi-ui`, and only for the subpaths actually used.
+- `pi-settings/src/style.css` is migrated to the token layer: **0** remaining `var(--vscode-*)` colour
+  references and 0 hardcoded hex. `--vscode-font-size` is kept on purpose (it still seeds `--fs`).
+  `tabs/models.ts`'s inline `Add/Edit Model` card border was the last holdout and now uses
+  `var(--pi-border-input)`.
+- **Why**: the design source (Ardot `726160554760857`, board "Style Spec" `2:541`) hardcodes a TDesign
+  palette with an explicit light/dark pair per token, while upstream used `var(--vscode-*)` exclusively
+  and had **no** theme branching at all (`@media` / `data-theme` / `.vscode-light`: 0 hits in both
+  packages). A full token migration was chosen over staying on the VS Code palette, so the webview no
+  longer follows the user's theme colour — only their light/dark mode and font settings.
+- **Why a workspace package and not a shared folder**: both consumers are Vite single-file bundles in a
+  pnpm workspace, so one symlink keeps a single copy of the tokens, and each package's `tsc` resolves
+  `pi-ui/dom` through the package's `exports` map. `pitfall`: adding a member means `pnpm install` must
+  be re-run before either package can resolve `pi-ui`.
+- **Verified**: `pnpm --filter pi-ui typecheck`; `pnpm --filter pi-settings build`; then bundle greps —
+  77 distinct `--pi-*` tokens referenced, exactly 1 `--vscode-*` left in `settings-dist.html`
+  (`--vscode-font-size`). `pnpm lint`, `pnpm typecheck`, full `pnpm build` all pass.
+- **NOT done yet (do not mistake for finished)**:
+  - Geometry was not touched — only colours moved. Settings pages are a palette-shifted version of the
+    old layout until each board (A, B1, B2) is rebuilt.
+  - `pi-chat/src/style.css` still consumes none of the tokens. It imports `tokens.css` only so the
+    cascade order is already correct for the follow-up pass; that pass is still outstanding.
+  - `createPopup` has no call sites yet — the composer's four hand-rolled popups should be collapsed
+    onto it during the boards D / C / E rework.
+
+### 9. Terminal (TUI) UI mode and terminal-session features removed (2026-09-16)
+
+- `src/ui-mode.ts` — `UiMode` is now `"webview" | "sidebar"`; `resolveUiMode()` falls back to
+  `sidebar`. `package.json` drops `"terminal"` from the `pi-agent-studio.ui` enum.
+- `src/terminal.ts` (open pi in a VS Code terminal) and `src/sessions.ts` (terminal ↔ session-file
+  tracking, `restartAll`) are **deleted**.
+- `extension.ts` — `open` / `openInNewWindow` / `openInFolder` no longer fall through to a terminal;
+  `sessions.restore`, the `onDidCloseTerminal` subscription and the "Restart Pi Terminals" prompt are
+  gone. `startBridge` / `createBridge` lost their `onTerminalSession` / `findTerminalSession` params.
+- `src/bridge/state.ts` — `reportTerminalSession` / `findTerminalSession` are documented no-ops now
+  (the `terminalSession` RPC handler in `bridge/handlers.ts` still exists and safely ignores them;
+  the session-status **registry** stays — it is the running/idle feed the board-G session sidebar
+  will consume).
+- `pi-settings` — the Settings page drops the three `terminal.*` fields (`showImages`,
+  `imageWidthCells`, `clearOnShrink`). `images.*` and the whole **Shell** group stay: the shell
+  path / command prefix still affect the bash commands the agent runs in webview mode.
+- **Why**: 彬哥 — the repo only ships the sidebar webview UI now; everything terminal-side was
+  serving a UI this fork no longer has.
+
 ### Left alone on purpose (dormant, zero runtime effect)
 
 Keeping these means the upstream diff stays small; none of them execute any more.
@@ -143,6 +209,65 @@ Keeping these means the upstream diff stays small; none of them execute any more
 - `pi-chat`'s `subagent` rendering (`messages.ts`, `style.css`, `globals.ts`) — **shared, not
   ours**: pi-subagents returns results under the same `subagent` tool name, so this code renders
   its output too. It must stay.
+
+## UI alignment pass (2026-09-16, in progress)
+
+Everything here is measured against the Ardot design file `726160554760857`.
+
+**Where the spec lives.** The "Style Spec" board (`2:541`) owns the colour table; boards A (`2:726`),
+B1 (`2:727`), B2 (`2:728`), C (`2:729`), D (`2:730`), E (`2:731`), F (`2:732`) and G (`2:733`) own
+per-screen geometry. Two traps in reading it:
+
+- Page 1's `Settings` boards (`2:295` / `2:381`) are an **abandoned concept** — a 360px list+detail
+  layout. Boards A/B superseded them, and the designer quoted `models.ts` line numbers on B1, so
+  A/B are the ones to trust.
+- Board E draws the thinking popup with **seven** levels, but `get_available_thinking_levels`
+  returns a per-model subset at runtime. The popup follows the RPC, never the board.
+
+**The token layer.** `pi-ui/` is a source-only workspace package — see entry 8. Both webviews import
+`pi-ui/tokens.css` at build time; the extension-side HTML strings cannot import anything, so
+`src/ui/design-tokens.ts` reads that same file off disk and inlines it (and `pi-ui/tokens.css` is
+whitelisted in `.vscodeignore`). **One colour table, no second copy to keep in sync.**
+
+Landed so far:
+
+- `pi-settings` — window shell rebuilt from board A: the window-spanning `.toolbar` is gone, the
+  title and reload control moved into `.nav-head`, the nav is 240px (64px collapsed) with a
+  four-state row and a `::before` selection bar. The whole component layer was rewritten from
+  B1/B2, and ~130 lines of provably dead CSS (`.list*`, `.form-label`, `.section*`, `.switch*`,
+  `.modal*`, `.subtab*`, `.alert*`, `.scope-select`, `.empty-state`, `.mcp-cfg*`) were dropped —
+  none of it had a call site left. Added B1's reveal toggle on API-key fields and the danger icon
+  in the three inline confirm bars.
+- `pi-chat` — tokenized (81 tokens; only `--vscode-font-family` / `--vscode-editor-font-family`
+  survive, inside `tokens.css` itself), plus a "design pass" block at the end of
+  `pi-chat/src/style.css` covering boards D / C / E / F. Inline colour strings in `messages.ts`
+  and `composer.ts` were converted too.
+- `src/chat/chat-sidebar.ts` — the sidebar loading screen rebuilt from board G W5.
+
+**Two traps found the hard way:**
+
+- `.toolbar`, `.composer-box` and `.widget-card` carry a `color-mix()` driven by `--pi-bg-on` so the
+  user's chat background image shows through. Any override that sets `background` on those three
+  silently kills that setting; the design pass deliberately leaves their backgrounds alone.
+- An author `display: inline-block` out-ranks the UA sheet's `[hidden] { display: none }`. The
+  Settings dirty dot needed an explicit `.cfg-dirty-dot[hidden]` rule to keep toggling.
+
+Still outstanding:
+
+- Boards G W1–W4: the session, settings and pi-package sidebars are **not wired**.
+  `src/sessions/sessions-sidebar.ts` and `src/settings/settings-sidebar.ts` exist but are never
+  registered (the session sidebar has had its terminal code stripped — see entry 9), and the package
+  browser does not exist at all. This reverses entry 3 — when it lands, **entry 3 must be rewritten**,
+  not left contradicting the code.
+- Both READMEs still carry historical terminal/TUI sections below the fold; only the tagline, the
+  slimmed-down callout, the fork table and the `ui` setting row reflect the webview-only scope.
+- `pi-ui`'s `createPopup` still has **no call sites**. The four hand-rolled popups in
+  `pi-chat/src/composer.ts` should be collapsed onto it (~200 lines of duplicated measure /
+  right-align / flip / outside-click logic).
+- The "design pass" block in `pi-chat/src/style.css` overrides earlier rules instead of replacing
+  them — fold it into the original declarations on the next cleanup.
+- Nothing has been checked **visually** yet. All verification so far is structural (bundle greps,
+  class-coverage scripts, typecheck, build). A render pass is still owed.
 
 ## Build & Run
 

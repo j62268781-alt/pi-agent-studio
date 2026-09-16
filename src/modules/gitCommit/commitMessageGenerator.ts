@@ -7,7 +7,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import * as path from "path";
 import * as vscode from "vscode";
-import { t } from "../i18n.ts";
+import { t } from "../../i18n.ts";
 import { getGitDiff } from "./gitUtils.ts";
 
 /**

@@ -186,147 +186,167 @@ body {
 }
 
 body {
-  font-family: var(--vscode-font-family);
+  font-family: var(--pi-font);
   font-size: var(--fs);
-  color: var(--vscode-foreground);
-  background: var(--vscode-editor-background);
+  color: var(--pi-text);
+  background: var(--pi-bg-page);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+/* ── window shell ─────────────────────────────────────────────────────────
+ * Board A (node 2:726). There is no window-spanning bar any more: the title
+ * and the reload control belong to the sidebar's own header, and the sidebar
+ * owns the collapse affordance at its foot. */
+
 .app {
   display: flex;
-  flex-direction: column;
   height: 100%;
   width: 100%;
+  background: var(--pi-bg-page);
+  color: var(--pi-text);
 }
 
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  height: 38px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
-}
-
-.toolbar-title {
-  font-size: var(--fs-13);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.toolbar-btn {
+.nav-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: var(--pi-h-control);
+  height: var(--pi-h-control);
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--vscode-foreground);
+  color: var(--pi-icon);
   cursor: pointer;
-  border-radius: 4px;
-  opacity: 0.8;
+  border-radius: var(--pi-r-md);
+  flex-shrink: 0;
 }
 
-.toolbar-btn:hover {
-  opacity: 1;
-  background: var(--vscode-toolbar-hoverBackground);
+.nav-icon-btn:hover {
+  background: var(--pi-bg-hover);
+  color: var(--pi-text);
 }
 
-.app-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
+.nav-icon-btn:disabled {
+  color: var(--pi-icon-disabled);
+  cursor: default;
+}
+
+.nav-icon-btn:disabled:hover {
+  background: transparent;
+}
+
+.nav-icon-btn .codicon {
+  font-size: var(--fs-16);
+  line-height: 1;
 }
 
 .nav {
-  width: 200px;
+  width: 240px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  padding: 8px 0;
-  border-right: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
-  background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+  gap: var(--pi-sp-1);
+  padding: var(--pi-sp-3);
+  border-right: 1px solid var(--pi-border);
+  background: var(--pi-bg-page);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.nav-toggle {
+.nav-head {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin: 0 8px 4px auto;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--vscode-foreground);
-  cursor: pointer;
+  justify-content: space-between;
+  gap: var(--pi-sp-2);
+  height: var(--pi-h-row);
+  padding: 0 var(--pi-sp-5);
   flex-shrink: 0;
 }
 
-.nav-toggle:hover {
-  background: var(--vscode-toolbar-hoverBackground);
-}
-
-.nav.collapsed {
-  width: 40px;
-}
-
-.nav.collapsed .nav-toggle {
-  margin: 0 auto 4px;
-}
-
-.nav.collapsed .nav-label {
-  display: none;
-}
-
-.nav.collapsed .nav-tab {
-  justify-content: center;
-  padding: 8px 0;
+.nav-title {
+  font-size: var(--fs-14);
+  font-weight: 500;
+  color: var(--pi-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-tab {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: var(--pi-sp-5);
+  width: 100%;
+  height: var(--pi-h-row);
+  padding: 0 var(--pi-sp-5);
   border: none;
+  border-radius: var(--pi-r-md);
   background: transparent;
-  color: var(--vscode-foreground);
-  font-family: var(--vscode-font-family);
-  font-size: var(--fs);
+  color: var(--pi-text);
+  font-family: var(--pi-font);
+  font-size: var(--fs-13);
   cursor: pointer;
   text-align: left;
-  width: 100%;
-  border-radius: 0;
+  flex-shrink: 0;
   transition: background 0.1s;
 }
 
 .nav-tab:hover {
-  background: var(--vscode-list-hoverBackground);
+  background: var(--pi-bg-hover);
 }
 
 .nav-tab.active {
-  background: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
-  color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+  background: var(--pi-bg-selected);
+  color: var(--pi-text-brand);
+  font-weight: 500;
+}
+
+.nav-tab:disabled {
+  color: var(--pi-text-disabled);
+  cursor: default;
+}
+
+.nav-tab:disabled:hover {
+  background: transparent;
 }
 
 .nav-tab .codicon {
-  font-size: var(--fs-14);
+  font-size: var(--fs-16);
   line-height: 1;
   flex-shrink: 0;
-  opacity: 0.8;
+  color: var(--pi-icon);
+}
+
+.nav-tab.active .codicon {
+  color: var(--pi-icon-brand);
+}
+
+.nav-tab:disabled .codicon {
+  color: var(--pi-icon-disabled);
+}
+
+/* Selection indicator. The board draws this bar as an in-flow flex child, which
+ * would shove every selected row's icon 15px to the right — so it is pinned to
+ * the row's leading edge as a pseudo-element and icon positions stay identical
+ * across all four states. */
+.nav-tab::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 24px;
+  border-radius: 2px;
+  background: var(--pi-brand);
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+.nav-tab.active::before {
+  opacity: 1;
 }
 
 .nav-label {
@@ -335,11 +355,47 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Board A also draws a collapse control at the foot of the sidebar. It is
+ * deliberately not implemented: the settings UI only opens as an editor-area
+ * WebviewPanel that settings-panel.ts moves into its own window, so there is
+ * never a narrow sidebar to collapse out of — the button would be dead weight.
+ *
+ * What follows is a safety net rather than a feature. If the panel is squeezed
+ * below this width the labels step aside on their own: there is no state to
+ * toggle and nothing for the user to operate. */
+@media (max-width: 640px) {
+  .nav {
+    width: 64px;
+    padding: 0;
+  }
+
+  .nav-title,
+  .nav-label {
+    display: none;
+  }
+
+  .nav-head {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .nav-tab {
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+  }
+
+  .nav-tab::before {
+    display: none;
+  }
+}
+
 .content {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  padding: 16px;
+  padding: var(--pi-sp-7) var(--pi-sp-8);
+  background: var(--pi-bg-page);
 }
 
 .tab-placeholder {
@@ -347,10 +403,22 @@ body {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--vscode-descriptionForeground);
+  color: var(--pi-text-muted);
   font-size: var(--fs-14);
-  opacity: 0.6;
 }
+
+/* ── components ───────────────────────────────────────────────────────────
+ * Ported from the design boards. Geometry follows B1/B2 (controls 32px tall,
+ * radius 6 on fields and 8 on cards), the four button states come from the
+ * "Style Spec" board.
+ *
+ * The previous component layer also carried a lot of dead CSS — .list*,
+ * .form-label/.form-input, .section*, .switch*, .modal*, .subtab*, .alert*,
+ * .scope-select, .empty-state and .mcp-cfg* had no call site left anywhere in
+ * tabs/*.ts, so they were dropped rather than restyled.
+ * ------------------------------------------------------------------------ */
+
+/* ── buttons ─────────────────────────────────────────────────────────────── */
 
 .btn,
 .btn-primary,
@@ -359,340 +427,746 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 5px 14px;
-  border: none;
-  border-radius: 4px;
-  background: var(--vscode-button-secondaryBackground);
-  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  gap: var(--pi-sp-2);
+  height: var(--pi-h-control);
+  padding: 0 var(--pi-sp-5);
+  border: 1px solid transparent;
+  border-radius: var(--pi-r-md);
+  background: var(--pi-bg-subtle);
+  color: var(--pi-text);
   font-family: inherit;
   font-size: var(--fs-13);
-  line-height: 1.3;
+  line-height: 1;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .btn:hover,
-.btn-primary:hover,
 .btn-secondary:hover,
 .btn-sm:hover {
-  background: var(--vscode-button-secondaryHoverBackground);
+  background: var(--pi-bg-hover);
+}
+
+.btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-sm:disabled {
+  background: var(--pi-bg-subtle);
+  color: var(--pi-text-disabled);
+  cursor: default;
 }
 
 .btn .codicon,
 .btn-primary .codicon,
 .btn-secondary .codicon,
 .btn-sm .codicon {
-  font-size: var(--fs-14);
+  font-size: var(--fs-16);
   line-height: 1;
   flex-shrink: 0;
 }
 
-.btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
 .btn-primary {
-  background: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
+  background: var(--pi-brand);
+  color: var(--pi-text-on-solid);
 }
 
 .btn-primary:hover {
-  background: var(--vscode-button-hoverBackground);
+  background: var(--pi-brand-hover);
 }
 
+.btn-primary:disabled,
+.btn-primary:disabled:hover {
+  background: var(--pi-bg-subtle);
+  color: var(--pi-text-disabled);
+}
+
+/* Unsaved-changes state — Style Spec board: #EAF2FF fill, #AAC7FF stroke,
+ * #0052D9 label. */
+.btn-primary.modified {
+  background: var(--pi-brand-soft);
+  border-color: var(--pi-border-brand);
+  color: var(--pi-text-brand);
+}
+
+.btn-primary.modified:hover {
+  background: var(--pi-bg-selected);
+}
+
+.btn-secondary {
+  background: var(--pi-bg-raised);
+  border-color: var(--pi-border-input);
+  color: var(--pi-text);
+}
+
+.btn-sm {
+  height: var(--pi-h-control-sm);
+  padding: 0 var(--pi-sp-4);
+  border-radius: var(--pi-r-sm);
+  font-size: var(--fs-12);
+}
+
+/* Destructive. Bare .btn-danger is a text tint; inside a confirm bar the
+ * board paints it solid #D14343 with a white label. */
 .btn-danger {
-  color: var(--vscode-errorForeground);
+  color: var(--pi-danger);
+}
+
+.confirm-bar .btn-danger {
+  background: var(--pi-danger);
+  border-color: transparent;
+  color: var(--pi-text-on-solid);
+}
+
+.confirm-bar .btn-danger:hover {
+  opacity: 0.88;
+}
+
+.btn-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pi-sp-3);
+  margin-top: var(--pi-sp-5);
+  flex-wrap: wrap;
 }
 
 .btn-icon {
-  padding: 0;
-  width: 26px;
-  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: var(--pi-h-control-sm);
+  height: var(--pi-h-control-sm);
+  padding: 0;
   border: none;
   background: transparent;
-  color: var(--vscode-foreground);
-  opacity: 0.7;
+  color: var(--pi-icon);
+  border-radius: var(--pi-r-sm);
   cursor: pointer;
-  border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .btn-icon:hover {
-  background: var(--vscode-toolbar-hoverBackground);
-  opacity: 1;
+  background: var(--pi-bg-hover);
+  color: var(--pi-text);
+}
+
+.btn-icon:disabled {
+  color: var(--pi-icon-disabled);
+  cursor: default;
+}
+
+.btn-icon:disabled:hover {
+  background: transparent;
 }
 
 .btn-icon .codicon {
-  font-size: var(--fs-14);
+  font-size: var(--fs-16);
   line-height: 1;
 }
 
-.section {
-  margin-bottom: 20px;
+/* Boards B1/W1 and B1/W11 draw destructive icon buttons on #FEF2F2. */
+.btn-icon.btn-danger {
+  background: var(--pi-danger-soft);
+  color: var(--pi-danger);
+}
+
+.btn-icon.btn-danger:hover {
+  background: var(--pi-bg-hover);
+}
+
+/* ── sections and page headers ───────────────────────────────────────────── */
+
+.tab-section {
+  margin-bottom: var(--pi-sp-8);
+}
+
+.page-title {
+  margin: 0 0 var(--pi-sp-5);
+  font-size: var(--fs-16);
+  font-weight: 500;
+  color: var(--pi-text);
 }
 
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--pi-sp-3);
+  min-height: var(--pi-h-row);
+  margin-bottom: var(--pi-sp-4);
+}
+
+.section-header h2,
+.section-header h3,
+.section-title {
+  margin: 0;
+  font-size: var(--fs-14);
+  font-weight: 500;
+  color: var(--pi-text);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--pi-sp-3);
 }
 
-.section-title {
-  font-size: var(--fs-14);
-  font-weight: 600;
-  margin: 0;
+/* Board B2: each page opens with a 16px title, while headers nested inside a
+ * page (e.g. B1's "Custom Providers") stay at 14px. Pages that own their whole
+ * shell — Models, which starts with a secondary tab row — get no page title,
+ * matching B1. */
+.content > .tab-section:first-child > .section-header:first-child > h3,
+.content > .tab-section:first-child > h3 {
+  font-size: var(--fs-16);
 }
 
-.section-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 4px;
-}
+/* ── list rows (providers, agents, servers, …) ───────────────────────────── */
 
-.list {
+.item-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--pi-sp-3);
+  margin-bottom: var(--pi-sp-5);
 }
 
-.list-item {
+.item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pi-sp-4);
+  padding: var(--pi-sp-4) var(--pi-sp-5);
+  border: 1px solid var(--pi-border);
+  border-radius: var(--pi-r-md);
+  background: var(--pi-bg-raised);
+}
+
+/* The OAuth and API-key panes emit bare sibling rows straight into
+ * #models-body — with no .item-list wrapper — so the list's own gap never
+ * reaches them. Now that every row carries a full border and radius, touching
+ * siblings read as one solid block instead of separate cards, so space them
+ * here too. The :not() keeps rows that *are* in a real .item-list from getting
+ * the gap twice. */
+:not(.item-list) > .item-row + .item-row {
+  margin-top: var(--pi-sp-3);
+}
+
+.item-row:hover {
+  background: var(--pi-bg-hover);
+}
+
+.item-row.selected {
+  background: var(--pi-bg-selected);
+  border-color: var(--pi-border-brand);
+}
+
+.item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.item-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  transition: background 0.1s;
-}
-
-.list-item:hover {
-  background: var(--vscode-list-hoverBackground);
-}
-
-.list-item-name {
-  font-weight: 500;
-  flex: 1 1 auto;
+  gap: var(--pi-sp-3);
   min-width: 0;
+  flex-wrap: wrap;
+}
+
+.item-name {
+  font-size: var(--fs-13);
+  color: var(--pi-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.list-item-desc {
-  font-size: var(--fs-12);
-  opacity: 0.7;
-  flex: 2 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.item-row.selected .item-name {
+  color: var(--pi-text-brand);
 }
 
-.list-item-actions {
+.item-desc {
+  font-size: var(--fs-11);
+  color: var(--pi-text-muted);
+  word-break: break-all;
+  min-width: 0;
+}
+
+.item-actions {
   display: flex;
-  gap: 2px;
+  align-items: center;
+  gap: var(--pi-sp-1);
   flex-shrink: 0;
 }
+
+.dim {
+  font-size: var(--fs-11);
+  color: var(--pi-text-secondary);
+  word-break: break-all;
+  min-width: 0;
+}
+
+/* ── badges — soft fill plus a coloured label, never a solid chip ────────── */
 
 .badge {
-  display: inline-block;
-  padding: 0 5px;
-  border-radius: 3px;
-  font-size: var(--fs-11);
-  font-weight: 500;
-  line-height: 1.5;
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
+  padding: 2px var(--pi-sp-2);
+  border-radius: var(--pi-r-xs);
+  background: var(--pi-bg-subtle);
+  color: var(--pi-text-secondary);
+  font-size: var(--fs-10);
+  line-height: 1.5;
 }
 
-.badge-user {
-  background: var(--vscode-badge-background, rgba(0, 0, 0, 0.2));
-  color: var(--vscode-badge-foreground);
-}
-.badge-project {
-  background: var(--vscode-charts-blue, #3794ff);
-  color: #fff;
-}
-.badge-builtin {
-  background: var(--vscode-charts-orange, #d18616);
-  color: #fff;
-}
-.badge-package {
-  background: var(--vscode-charts-purple, #b392f0);
-  color: #fff;
-}
-.badge-cli {
-  background: var(--vscode-charts-green, #4ec9b0);
-  color: #fff;
-}
-.badge-other {
-  background: var(--vscode-disabledForeground, rgba(127, 127, 127, 0.5));
-  color: #fff;
-}
+.badge-user,
+.badge-package,
 .badge-stdio {
-  background: var(--vscode-charts-blue, #3794ff);
-  color: #fff;
+  background: var(--pi-info-soft);
+  color: var(--pi-text-brand);
 }
+
+.badge-project,
+.badge-cli {
+  background: var(--pi-success-soft);
+  color: var(--pi-text-success);
+}
+
+.badge-builtin {
+  background: var(--pi-bg-subtle);
+  color: var(--pi-text-secondary);
+}
+
+.badge-other {
+  background: var(--pi-bg-subtle);
+  color: var(--pi-text-muted);
+}
+
 .badge-http {
-  background: var(--vscode-charts-orange, #d18616);
-  color: #fff;
+  background: var(--pi-warning-soft);
+  color: var(--pi-text-warning);
 }
+
 .badge-disabled {
-  background: var(--vscode-errorForeground, #f48771);
-  color: #fff;
+  background: var(--pi-danger-soft);
+  color: var(--pi-text-danger);
+}
+
+/* ── fields, inputs, textareas ───────────────────────────────────────────── */
+
+.field-label {
+  display: block;
+  margin: var(--pi-sp-4) 0 var(--pi-sp-2);
+  font-size: var(--fs-12);
+  color: var(--pi-text-secondary);
+}
+
+.hint {
+  margin: 2px 0 var(--pi-sp-3);
+  font-size: var(--fs-11);
+  color: var(--pi-text-muted);
+  word-break: break-all;
+}
+
+.hint code {
+  padding: 1px 4px;
+  border-radius: var(--pi-r-xs);
+  background: var(--pi-bg-subtle);
+  font-family: var(--pi-mono);
+  font-size: var(--fs-11);
+}
+
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: var(--pi-sp-3);
+  margin: var(--pi-sp-3) 0;
+  font-size: var(--fs-13);
+  color: var(--pi-text);
+  cursor: pointer;
+}
+
+.check-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--pi-brand);
 }
 
 .form-group {
-  margin-bottom: 12px;
-}
-
-.form-label {
-  display: block;
-  font-size: var(--fs-12);
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.form-input {
-  width: 100%;
-  padding: 5px 8px;
-  background: var(--vscode-input-background);
-  color: var(--vscode-input-foreground);
-  border: 1px solid var(--vscode-input-border, var(--vscode-widget-border, transparent));
-  border-radius: 4px;
-  font-family: var(--vscode-font-family);
-  font-size: var(--fs);
-  outline: none;
-}
-
-.form-input:focus {
-  border-color: var(--vscode-focusBorder);
-}
-
-textarea.form-input {
-  resize: vertical;
-  min-height: 80px;
-  font-family: var(--vscode-editor-font-family);
-  font-size: var(--fs-12);
+  margin-bottom: var(--pi-sp-5);
+  min-width: 0;
 }
 
 .form-row {
   display: flex;
-  gap: 8px;
-  align-items: flex-end;
+  gap: var(--pi-sp-5);
+  align-items: flex-start;
 }
 
-.form-row .form-group {
+.form-row > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-card input:not([type="checkbox"]):not([type="radio"]),
+.editor-card select,
+.editor-card textarea,
+.cfg-field input:not([type="checkbox"]):not([type="radio"]),
+.cfg-field select,
+.cfg-field textarea,
+.cfg-search,
+.ta,
+.oauth-progress input {
+  width: 100%;
+  height: var(--pi-h-control);
+  padding: 0 var(--pi-sp-5);
+  border: 1px solid var(--pi-border-input);
+  border-radius: var(--pi-r-sm);
+  background: var(--pi-bg-raised);
+  color: var(--pi-text);
+  font-family: var(--pi-font);
+  font-size: var(--fs-13);
+  outline: none;
+}
+
+.editor-card input::placeholder,
+.cfg-field input::placeholder,
+.cfg-search::placeholder,
+.ta::placeholder,
+.oauth-progress input::placeholder {
+  color: var(--pi-text-muted);
+}
+
+.editor-card input:focus,
+.editor-card select:focus,
+.editor-card textarea:focus,
+.cfg-field input:focus,
+.cfg-field select:focus,
+.cfg-field textarea:focus,
+.cfg-search:focus,
+.ta:focus,
+.oauth-progress input:focus {
+  border-color: var(--pi-brand);
+}
+
+.editor-card textarea,
+.cfg-field textarea,
+.ta {
+  height: auto;
+  min-height: 84px;
+  padding: var(--pi-sp-4);
+  font-family: var(--pi-mono);
+  font-size: var(--fs-12);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* ── cards ───────────────────────────────────────────────────────────────── */
+
+.editor-card {
+  margin: var(--pi-sp-3) 0;
+  padding: var(--pi-sp-7);
+  border: 1px solid var(--pi-border);
+  border-radius: var(--pi-r-md);
+  background: var(--pi-bg-surface);
+}
+
+.editor-card h3 {
+  margin: 0 0 var(--pi-sp-3);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  color: var(--pi-text);
+}
+
+/* Nested cards (a model inside a provider, a field group inside an edit card)
+ * flip back to the raised surface so the two levels stay legible. */
+.editor-card .editor-card {
+  background: var(--pi-bg-raised);
+}
+
+/* ── inline delete confirmation (B1 board W12) ───────────────────────────── */
+
+.confirm-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--pi-sp-5);
+  margin: var(--pi-sp-3) 0;
+  padding: var(--pi-sp-5);
+  border-radius: var(--pi-r-md);
+  background: var(--pi-bg-surface);
+  color: var(--pi-text);
+  font-size: var(--fs-13);
+}
+
+/* ── status and messages ─────────────────────────────────────────────────── */
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--pi-r-full);
+  flex-shrink: 0;
+}
+
+.status-dot.on {
+  background: var(--pi-success);
+}
+
+.status-dot.off {
+  background: var(--pi-border-input);
+}
+
+.error {
+  margin: var(--pi-sp-3) 0;
+  padding: var(--pi-sp-4) var(--pi-sp-5);
+  border: 1px solid var(--pi-danger);
+  border-radius: var(--pi-r-md);
+  background: var(--pi-danger-soft);
+  color: var(--pi-text-danger);
+  font-size: var(--fs-12);
+}
+
+/* Board F board W2 "Banner Warning": #FEF3E6 fill, #E37318 label, no bar. */
+.msg-warn {
+  margin: 0 0 var(--pi-sp-3);
+  padding: var(--pi-sp-4) var(--pi-sp-5);
+  border-radius: var(--pi-r-md);
+  background: var(--pi-warning-soft);
+  color: var(--pi-text-warning);
+  font-size: var(--fs-12);
+  line-height: 1.5;
+}
+
+/* ── Models page: secondary tab row (B1 board W1) ────────────────────────── */
+
+.models-tabs {
+  display: flex;
+  gap: var(--pi-sp-9);
+  height: 36px;
+  margin-bottom: var(--pi-sp-7);
+  border-bottom: 1px solid var(--pi-border);
+}
+
+.models-tab {
+  display: flex;
+  align-items: center;
+  margin-bottom: -1px;
+  padding: 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--pi-text-secondary);
+  font-size: var(--fs-13);
+  cursor: pointer;
+}
+
+.models-tab:hover {
+  color: var(--pi-text);
+}
+
+.models-tab.active {
+  color: var(--pi-text-brand);
+  font-weight: 500;
+  border-bottom-color: var(--pi-brand);
+}
+
+/* ── OAuth progress cards (B1 boards W3–W10) ─────────────────────────────── */
+
+.oauth-progress {
+  width: 100%;
+  max-width: 380px;
+  margin: var(--pi-sp-3) 0;
+  padding: var(--pi-sp-7);
+  border: 1px solid var(--pi-border);
+  border-radius: var(--pi-r-md);
+  background: var(--pi-bg-raised);
+}
+
+.oauth-progress .url {
+  margin: var(--pi-sp-1) 0;
+  color: var(--pi-text-brand);
+  font-family: var(--pi-mono);
+  font-size: var(--fs-11);
+  word-break: break-all;
+}
+
+.oauth-progress a {
+  color: var(--pi-text-brand);
+}
+
+/* ── compatibility groups (B1 board W2) ──────────────────────────────────── */
+
+.compat-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pi-sp-1);
+  margin-top: var(--pi-sp-1);
+}
+
+.compat-hint {
+  margin: 0 0 var(--pi-sp-1);
+  color: var(--pi-text-muted);
+  font-size: var(--fs-11);
+  line-height: 1.5;
+}
+
+.compat-bools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--pi-sp-1) var(--pi-sp-5);
+  margin-bottom: var(--pi-sp-3);
+}
+
+.compat-bool {
+  display: flex;
+  align-items: center;
+  gap: var(--pi-sp-3);
+  min-width: 0;
+}
+
+.compat-bool-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--pi-text-secondary);
+  font-size: var(--fs-11);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Declared after the shared input rule so width/height win. */
+.compat-bool select {
+  width: auto;
+  min-width: 88px;
+  height: var(--pi-h-control-sm);
+  flex-shrink: 0;
+}
+
+/* ── Settings page: search + collapsible groups (B2 board W5) ────────────── */
+
+.cfg-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pi-sp-3);
+  margin-bottom: var(--pi-sp-4);
+}
+
+.cfg-search {
   flex: 1;
 }
 
-.form-hint {
-  font-size: var(--fs-11);
-  opacity: 0.7;
-  margin-top: 2px;
+.cfg-group {
+  margin-bottom: var(--pi-sp-2);
+  border: 1px solid var(--pi-border);
+  border-radius: var(--pi-r-sm);
+  overflow: hidden;
+  background: var(--pi-bg-raised);
 }
 
-.switch-row {
+.cfg-group.open {
+  background: var(--pi-bg-surface);
+}
+
+.cfg-group-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.switch {
-  position: relative;
-  width: 32px;
-  height: 18px;
-  display: inline-block;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.switch .slider {
-  position: absolute;
+  gap: var(--pi-sp-3);
+  padding: var(--pi-sp-4) var(--pi-sp-5);
+  color: var(--pi-text);
+  font-size: var(--fs-13);
+  font-weight: 500;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--vscode-input-background, rgba(127, 127, 127, 0.3));
-  border-radius: 9px;
-  transition: background 0.15s;
-  border: 1px solid var(--vscode-widget-border, transparent);
+  user-select: none;
 }
 
-.switch .slider::before {
-  content: "";
-  position: absolute;
-  height: 14px;
-  width: 14px;
-  left: 1px;
-  bottom: 1px;
-  background: var(--vscode-foreground);
-  border-radius: 50%;
-  transition: transform 0.15s;
+.cfg-group-header:hover {
+  background: var(--pi-bg-hover);
 }
 
-.switch input:checked + .slider {
-  background: var(--vscode-button-background);
+.cfg-group-header .codicon {
+  color: var(--pi-icon);
+  transition: transform 0.12s;
+  transform: rotate(-90deg);
 }
 
-.switch input:checked + .slider::before {
-  transform: translateX(14px);
+.cfg-group.open .cfg-group-header .codicon {
+  transform: none;
 }
 
-.text-warning {
-  color: var(--vscode-editorWarning-foreground, #cca700);
+.cfg-group-body {
+  display: none;
+  padding: var(--pi-sp-7);
+  border-top: 1px solid var(--pi-border);
 }
 
-.text-error {
-  color: var(--vscode-errorForeground, #f48771);
+.cfg-group.open .cfg-group-body {
+  display: block;
 }
 
-.spinner {
+.cfg-group.hidden {
+  display: none;
+}
+
+/* Board B2 W5 draws a 6px brand dot, not a glyph. The element is a <span>
+ * carrying a "●" character and toggled with the `hidden` attribute, so it
+ * needs an explicit display — and an explicit [hidden] rule to win back over
+ * it, since a bare `display: inline-block` would out-rank the UA sheet's
+ * `[hidden] { display: none }`. */
+.cfg-dirty-dot {
   display: inline-block;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--vscode-charts-blue, #3794ff);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  vertical-align: middle;
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: var(--pi-r-full);
+  background: var(--pi-brand);
+  overflow: hidden;
+  color: transparent;
+  font-size: 0;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.cfg-dirty-dot[hidden] {
+  display: none;
 }
+
+.cfg-reset {
+  width: var(--pi-h-control-sm);
+  height: var(--pi-h-control-sm);
+}
+
+.cfg-group:not(.open) .cfg-reset {
+  display: none;
+}
+
+.cfg-field {
+  margin-bottom: var(--pi-sp-5);
+}
+
+.cfg-desc {
+  margin: 2px 0 var(--pi-sp-2);
+  color: var(--pi-text-muted);
+  font-size: var(--fs-11);
+  line-height: 1.5;
+}
+
+/* ── toast (board F W1) ──────────────────────────────────────────────────── */
 
 .toast {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
-  max-width: 360px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: var(--vscode-editorWidget-background, #2d2d30);
-  color: var(--vscode-foreground);
-  border: 1px solid var(--vscode-widget-border, transparent);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  right: var(--pi-sp-7);
+  bottom: var(--pi-sp-7);
   z-index: 200;
-  font-size: var(--fs-12);
+  display: flex;
+  align-items: center;
+  gap: var(--pi-sp-3);
+  max-width: 360px;
+  padding: var(--pi-sp-4) var(--pi-sp-6);
+  border-radius: var(--pi-r-md);
+  background: var(--pi-toast-bg);
+  color: var(--pi-toast-fg);
+  font-size: var(--fs-13);
   white-space: pre-wrap;
   word-break: break-word;
   opacity: 0;
@@ -708,555 +1182,90 @@ textarea.form-input {
   transform: translateY(0);
 }
 
-.toast.error {
-  border-color: var(--vscode-errorForeground, #f48771);
+.toast.info {
+  border-left: 3px solid var(--pi-toast-info);
 }
 
 .toast.success {
-  border-color: var(--vscode-testing-runPassed, #3fb950);
+  border-left: 3px solid var(--pi-toast-success);
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  color: var(--vscode-descriptionForeground);
-  text-align: center;
-  gap: 8px;
+.toast.warning {
+  border-left: 3px solid var(--pi-text-warning);
 }
 
-.empty-state .codicon {
-  font-size: var(--fs-32);
-  opacity: 0.3;
-  margin-bottom: 8px;
+.toast.error {
+  border-left: 3px solid var(--pi-toast-error);
 }
 
-.scope-select {
-  padding: 3px 6px;
-  background: var(--vscode-dropdown-background);
-  color: var(--vscode-dropdown-foreground);
-  border: 1px solid var(--vscode-dropdown-border, var(--vscode-widget-border, transparent));
-  border-radius: 4px;
-  font-family: var(--vscode-font-family);
-  font-size: var(--fs-12);
-  outline: none;
-}
+/* ── spinner ─────────────────────────────────────────────────────────────── */
 
-.alert {
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: var(--fs-12);
-  margin-bottom: 12px;
-}
-
-.alert-warning {
-  background: var(--vscode-inputValidation-warningBackground, rgba(204, 167, 0, 0.1));
-  border: 1px solid var(--vscode-inputValidation-warningBorder, #cca700);
-  color: var(--vscode-foreground);
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal {
-  width: 520px;
-  max-width: 90vw;
-  max-height: 80vh;
-  overflow-y: auto;
-  background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-  border: 1px solid var(--vscode-widget-border, transparent);
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.modal h3 {
-  margin: 0;
-  font-size: var(--fs-14);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.subtabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
-}
-
-.subtab {
-  padding: 6px 14px;
-  border: none;
-  background: transparent;
-  color: var(--vscode-foreground);
-  font-family: var(--vscode-font-family);
-  font-size: var(--fs-12);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.1s;
-}
-
-.subtab:hover {
-  color: var(--vscode-foreground);
-}
-
-.subtab.active {
-  border-bottom-color: var(--vscode-button-background);
-  color: var(--vscode-button-background);
-}
-
-.tab-section {
-  margin-bottom: 20px;
-}
-
-.hint {
-  font-size: var(--fs-11);
-  opacity: 0.65;
-  margin: 2px 0 8px;
-  word-break: break-all;
-}
-
-.hint code {
-  font-family: var(--vscode-editor-font-family, monospace);
-  background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
-  padding: 1px 4px;
-  border-radius: 2px;
-  font-size: var(--fs-11);
-}
-
-.ta {
-  width: 100%;
-  min-height: 140px;
-  resize: vertical;
-  font-family: var(--vscode-editor-font-family, monospace);
-  font-size: var(--fs-12);
-  line-height: 1.4;
-  padding: 6px 8px;
-  background: var(--vscode-input-background);
-  color: var(--vscode-input-foreground);
-  border: 1px solid var(--vscode-input-border, var(--vscode-widget-border, transparent));
-  border-radius: 4px;
-  outline: none;
-}
-
-.ta:focus {
-  border-color: var(--vscode-focusBorder);
-}
-
-.btn-secondary {
-  background: var(--vscode-button-secondaryBackground);
-  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
-}
-
-.btn-sm {
-  padding: 4px 10px;
-  font-size: var(--fs-13);
-}
-
-.btn-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.btn-primary.modified {
-  box-shadow: 0 0 0 1px var(--vscode-charts-orange, #e0af68);
-}
-
-.item-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 10px;
-}
-
-.item-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
-}
-
-.item-row:hover {
-  background: var(--vscode-list-hoverBackground);
-}
-
-.item-row.selected {
-  background: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
-  color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
-}
-
-.item-main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.item-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  flex-wrap: wrap;
-}
-
-.item-desc {
-  opacity: 0.6;
-  font-size: var(--fs-11);
-  word-break: break-all;
-  min-width: 0;
-}
-
-.item-name {
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.item-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.dim {
-  opacity: 0.6;
-  font-size: var(--fs-11);
-  word-break: break-all;
-  min-width: 0;
-}
-
-.editor-card {
-  border: 1px solid var(--vscode-widget-border, transparent);
-  border-radius: 6px;
-  padding: 12px;
-  margin: 8px 0;
-  background: var(--vscode-editor-background, transparent);
-}
-
-.editor-card h3 {
-  margin: 0 0 8px;
-}
-
-.field-label {
-  display: block;
-  font-size: var(--fs-11);
-  opacity: 0.7;
-  margin: 8px 0 2px;
-}
-
-.editor-card input:not([type="checkbox"]),
-.editor-card select,
-.editor-card textarea,
-.cfg-field input:not([type="checkbox"]),
-.cfg-field select,
-.cfg-field textarea {
-  width: 100%;
-  padding: 4px 6px;
-  background: var(--vscode-input-background);
-  color: var(--vscode-input-foreground);
-  border: 1px solid var(--vscode-input-border, transparent);
-  border-radius: 3px;
-  font-size: var(--fs-12);
-  font-family: inherit;
-  outline: none;
-}
-
-.editor-card input:focus,
-.editor-card select:focus,
-.editor-card textarea:focus,
-.cfg-field input:focus,
-.cfg-field select:focus,
-.cfg-field textarea:focus {
-  border-color: var(--vscode-focusBorder);
-}
-
-.cfg-search-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.cfg-search {
-  flex: 1;
-  padding: 5px 8px;
-  background: var(--vscode-input-background);
-  color: var(--vscode-input-foreground);
-  border: 1px solid var(--vscode-input-border, transparent);
-  border-radius: 4px;
-  font-size: var(--fs-12);
-  font-family: inherit;
-  outline: none;
-}
-
-.cfg-search:focus {
-  border-color: var(--vscode-focusBorder);
-}
-
-.cfg-group {
-  border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
-  border-radius: 4px;
-  margin-bottom: 6px;
-  overflow: hidden;
-}
-
-.cfg-group-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  cursor: pointer;
-  font-size: var(--fs-12);
-  font-weight: 600;
-  user-select: none;
-}
-
-.cfg-group-header:hover {
-  background: var(--vscode-toolbar-hoverBackground);
-}
-
-.cfg-group-header .codicon {
-  transition: transform 0.12s;
-  transform: rotate(-90deg);
-}
-
-.cfg-group.open .cfg-group-header .codicon {
-  transform: none;
-}
-
-.cfg-group-body {
-  display: none;
-  padding: 10px;
-  border-top: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
-}
-
-.cfg-group.open .cfg-group-body {
-  display: block;
-}
-
-.cfg-group.hidden {
-  display: none;
-}
-
-.cfg-dirty-dot {
-  margin-left: auto;
-  color: var(--vscode-charts-orange, #d18616);
-  font-size: var(--fs-10);
-}
-
-.cfg-reset {
-  width: 20px;
-  height: 20px;
-}
-
-.cfg-group:not(.open) .cfg-reset {
-  display: none;
-}
-
-.cfg-field {
-  margin-bottom: 12px;
-}
-
-.mcp-cfg {
-  margin-bottom: 10px;
-}
-
-.mcp-cfg .check-label {
-  margin-bottom: 6px;
-}
-
-.mcp-cfg-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.mcp-cfg-field {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.mcp-cfg-row .check-label {
-  margin: 0;
-  white-space: nowrap;
-}
-
-.mcp-cfg-row .field-label {
-  margin: 0;
-  white-space: nowrap;
-}
-
-.mcp-cfg-row input[type="number"] {
-  width: 90px;
-}
-
-.cfg-desc {
-  font-size: var(--fs-10);
-  opacity: 0.6;
-  margin-top: 2px;
-}
-
-.check-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 6px 0;
-  font-size: var(--fs-12);
-  cursor: pointer;
-}
-
-.confirm-bar {
-  padding: 6px 10px;
-  background: var(--vscode-inputValidation-errorBackground, #5a1d1d);
-  color: var(--vscode-inputValidation-errorForeground, #fff);
-  font-size: var(--fs-12);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  border-radius: 4px;
-  margin: 4px 0;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.spinner {
   display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--pi-info);
+  border-top-color: transparent;
+  border-radius: var(--pi-r-full);
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
 }
 
-.status-dot.on {
-  background: #4caf50;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.status-dot.off {
-  background: #9e9e9e;
+/* ── extra codicon glyphs ────────────────────────────────────────────────── */
+/* The glyph table at the top of this file is a hand-written subset of
+ * @vscode/codicons; anything used here but not declared there renders blank. */
+
+.codicon-eye::before {
+  content: "\ea70";
 }
 
-.models-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
-  margin-bottom: 12px;
+.codicon-eye-closed::before {
+  content: "\eae7";
 }
 
-.models-tab {
-  flex: 1;
-  padding: 6px 8px;
-  text-align: center;
-  cursor: pointer;
-  font-size: var(--fs-11);
-  opacity: 0.6;
-  border-bottom: 2px solid transparent;
+/* ── secret fields with a reveal toggle (B1 board W1/W11) ────────────────── */
+
+.input-action {
+  position: relative;
+  display: block;
+  width: 100%;
 }
 
-.models-tab:hover {
-  opacity: 0.8;
+.input-action > input {
+  padding-right: 40px;
 }
 
-.models-tab.active {
-  opacity: 1;
-  border-bottom-color: var(--vscode-focusBorder);
+.input-action > .btn-icon {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
+  background: var(--pi-bg-subtle);
+  color: var(--pi-icon);
 }
 
-.msg-warn {
-  padding: 6px 8px;
-  margin: 0 0 6px;
-  background: rgba(224, 175, 104, 0.12);
-  border-left: 3px solid var(--vscode-charts-orange, #e0af68);
-  color: var(--vscode-charts-orange, #e0af68);
-  font-size: var(--fs-11);
-  line-height: 1.4;
-  border-radius: 2px;
+.input-action > .btn-icon:hover {
+  background: var(--pi-bg-hover);
 }
 
-.error {
-  padding: 6px 10px;
-  background: var(--vscode-inputValidation-errorBackground, #5a1d1d);
-  color: var(--vscode-inputValidation-errorForeground, #fff);
-  border: 1px solid var(--vscode-inputValidation-errorBorder, transparent);
-  border-radius: 3px;
-  font-size: var(--fs-12);
-  margin: 8px 0;
+/* ── confirm bar internals (B1 board W12) ────────────────────────────────── */
+
+.confirm-icon {
+  flex-shrink: 0;
+  color: var(--pi-danger);
+  font-size: var(--fs-16);
+  line-height: 1;
 }
 
-.oauth-progress .url {
-  word-break: break-all;
-  font-size: var(--fs-11);
-  margin: 4px 0;
-}
-
-.oauth-progress a {
-  color: var(--vscode-textLink-foreground);
-}
-
-.compat-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.compat-hint {
-  font-size: var(--fs-10);
-  opacity: 0.65;
-  margin: 0 0 4px;
-  line-height: 1.4;
-}
-
-.compat-bools {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 4px 12px;
-  margin-bottom: 8px;
-}
-
-.compat-bool {
+.confirm-bar > span {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.compat-bool-label {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--fs-11);
-  opacity: 0.8;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.compat-bool select {
-  width: auto;
-  flex-shrink: 0;
-  min-width: 72px;
+  gap: var(--pi-sp-3);
+  margin-left: auto;
 }

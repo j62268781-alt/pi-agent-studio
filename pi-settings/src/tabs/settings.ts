@@ -293,16 +293,8 @@ const GROUPS: SettingGroup[] = [
     ],
   },
   {
-    title: t("Terminal & Images"),
+    title: t("Images"),
     fields: [
-      { key: "terminal.showImages", label: t("Show images in terminal"), type: "bool", def: true },
-      { key: "terminal.imageWidthCells", label: t("Image width (cells)"), type: "number", def: 60 },
-      {
-        key: "terminal.clearOnShrink",
-        label: t("Clear on shrink"),
-        type: "bool",
-        desc: t("Clear empty rows when content shrinks"),
-      },
       {
         key: "images.autoResize",
         label: t("Auto-resize images"),

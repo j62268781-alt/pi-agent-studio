@@ -402,7 +402,7 @@ function renderProv(parent: HTMLElement, data: ModelsData) {
   if (!provs.length) h += `<span class="dim">${t("No custom providers")}</span>`;
   for (const p of provs) {
     if (state.deleteTarget === p.id) {
-      h += `<div class="confirm-bar">${escHtml(t('Delete "{0}"?', p.name))} <span><button class="btn-sm btn-danger" data-action="prov-delete-confirm" data-id="${escAttr(p.id)}">${t("Delete")}</button> <button class="btn-icon" data-action="prov-delete-cancel" title="${t("Cancel")}"><span class="codicon codicon-close"></span></button></span></div>`;
+      h += `<div class="confirm-bar"><span class="codicon codicon-error confirm-icon"></span>${escHtml(t('Delete "{0}"?', p.name))} <span><button class="btn-sm btn-danger" data-action="prov-delete-confirm" data-id="${escAttr(p.id)}">${t("Delete")}</button> <button class="btn-icon" data-action="prov-delete-cancel" title="${t("Cancel")}"><span class="codicon codicon-close"></span></button></span></div>`;
       continue;
     }
     const isExpanded = state.expanded === p.id;
@@ -425,7 +425,7 @@ function renderProvDetail(provId: string, data: ModelsData) {
   let h = `<div class="editor-card"><h3>${t("Provider")}</h3>`;
   h += `<label class="field-label">${t("Name")}</label><input id="pd-name" value="${escAttr(provId)}" placeholder="provider-name" />`;
   h += `<label class="field-label">${t("Base URL")}</label><input id="pd-baseUrl" value="${escAttr(prov.baseUrl ?? "")}" placeholder="https://api.example.com/v1" />`;
-  h += `<label class="field-label">${t("API Key")}</label><input id="pd-apiKey" type="password" value="${escAttr(prov.apiKey ?? "")}" placeholder="sk-... or $ENV_VAR or !cmd" />`;
+  h += `<label class="field-label">${t("API Key")}</label><span class="input-action"><input id="pd-apiKey" type="password" value="${escAttr(prov.apiKey ?? "")}" placeholder="sk-... or $ENV_VAR or !cmd" /><button class="btn-icon" type="button" data-action="toggle-secret" data-input="pd-apiKey" title="${t("Show")}"><span class="codicon codicon-eye"></span></button></span>`;
   h += `<label class="field-label">${t("API Protocol")}</label><select id="pd-api">`;
   for (const [val, label] of APIS) {
     h += `<option value="${escAttr(val)}"${prov.api === val ? " selected" : ""}>${escHtml(label)}</option>`;
@@ -448,7 +448,7 @@ function renderProvDetail(provId: string, data: ModelsData) {
       state.deleteModel.provider === provId &&
       state.deleteModel.modelId === mid
     ) {
-      h += `<div class="confirm-bar">${escHtml(t('Delete model "{0}"?', m.name || mid))} <span><button class="btn-sm btn-danger" data-action="model-delete-confirm" data-pid="${escAttr(provId)}" data-mid="${escAttr(mid)}">${t("Delete")}</button> <button class="btn-icon" data-action="model-delete-cancel" title="${t("Cancel")}"><span class="codicon codicon-close"></span></button></span></div>`;
+      h += `<div class="confirm-bar"><span class="codicon codicon-error confirm-icon"></span>${escHtml(t('Delete model "{0}"?', m.name || mid))} <span><button class="btn-sm btn-danger" data-action="model-delete-confirm" data-pid="${escAttr(provId)}" data-mid="${escAttr(mid)}">${t("Delete")}</button> <button class="btn-icon" data-action="model-delete-cancel" title="${t("Cancel")}"><span class="codicon codicon-close"></span></button></span></div>`;
       continue;
     }
     if (state.editModel && state.editModel.provider === provId && state.editModel.modelId === mid) {
@@ -483,7 +483,7 @@ function renderProvAddForm() {
   return `<div class="editor-card"><h3>${t("Add Provider")}</h3>
     <label class="field-label">${t("Name")}</label><input id="pf-name" placeholder="my-provider" />
     <label class="field-label">${t("Base URL")}</label><input id="pf-baseUrl" placeholder="https://api.example.com/v1" />
-    <label class="field-label">${t("API Key")}</label><input id="pf-apiKey" type="password" placeholder="sk-... or $ENV_VAR or !cmd" />
+    <label class="field-label">${t("API Key")}</label><span class="input-action"><input id="pf-apiKey" type="password" placeholder="sk-... or $ENV_VAR or !cmd" /><button class="btn-icon" type="button" data-action="toggle-secret" data-input="pf-apiKey" title="${t("Show")}"><span class="codicon codicon-eye"></span></button></span>
     <label class="field-label">${t("API Protocol")}</label><select id="pf-api">${APIS.map(([v, l]) => `<option value="${escAttr(v)}">${escHtml(l)}</option>`).join("")}</select>
     <label class="check-label"><input type="checkbox" id="pf-authHeader" /> ${t("authHeader (add Authorization: Bearer header)")}</label>
     ${renderHeadersField("pf-headers")}
@@ -502,7 +502,7 @@ function renderModelFields(provId: string, existing: ModelEntry | null, isNew: b
   const hasImage = !!e?.input?.includes("image");
   const tlm = e?.thinkingLevelMap != null ? safeJsonStringify(e.thinkingLevelMap) : "";
   const sp = e?.samplingParams != null ? safeJsonStringify(e.samplingParams) : "";
-  return `<div class="editor-card" style="border:1px solid var(--vscode-focusBorder);border-radius:4px;margin:4px 0"><h3>${isNew ? t("Add Model") : t("Edit Model")}</h3>
+  return `<div class="editor-card"><h3>${isNew ? t("Add Model") : t("Edit Model")}</h3>
     <div class="form-row"><div class="form-group"><label class="field-label">${t("Model ID")}</label><input id="mf-id" value="${escAttr(e?.id ?? "")}" placeholder="model-id" ${isNew ? "" : "readonly"} /></div>
     <div class="form-group"><label class="field-label">${t("Display Name")}</label><input id="mf-name" value="${escAttr(e?.name ?? "")}" placeholder="${t("Optional")}" /></div></div>
     <div class="form-row"><div class="form-group"><label class="field-label">${t("Context Window")}</label><input id="mf-ctx" type="number" value="${e?.contextWindow ?? ""}" placeholder="200000" /></div>
@@ -606,7 +606,7 @@ function renderApiKeys(parent: HTMLElement, data: ModelsData) {
   let h = "";
   for (const p of items) {
     if (state.apiKeyDeleteTarget === p.id) {
-      h += `<div class="confirm-bar">${escHtml(t('Remove API key for "{0}"?', p.name))} <span><button class="btn-sm btn-danger" data-action="apikey-remove-confirm" data-id="${escAttr(p.id)}">${t("Remove")}</button> <button class="btn-icon" data-action="apikey-remove-cancel" title="${t("Cancel")}"><span class="codicon codicon-close"></span></button></span></div>`;
+      h += `<div class="confirm-bar"><span class="codicon codicon-error confirm-icon"></span>${escHtml(t('Remove API key for "{0}"?', p.name))} <span><button class="btn-sm btn-danger" data-action="apikey-remove-confirm" data-id="${escAttr(p.id)}">${t("Remove")}</button> <button class="btn-icon" data-action="apikey-remove-cancel" title="${t("Cancel")}"><span class="codicon codicon-close"></span></button></span></div>`;
       continue;
     }
     h += `<div class="item-row"><div class="item-main"><div class="item-title"><span class="status-dot ${p.configured ? "on" : "off"}"></span><span class="item-name">${escHtml(p.name)}</span><span class="badge ${p.configured ? "badge-cli" : "badge-other"}">${p.configured ? t("configured") : t("not set")}</span></div><div class="item-desc">${t("{0} models", p.modelCount)}</div></div>`;
@@ -617,7 +617,7 @@ function renderApiKeys(parent: HTMLElement, data: ModelsData) {
       h += `<button class="btn-icon" data-action="apikey-set" data-id="${escAttr(p.id)}" title="${t("Set API key")}"><span class="codicon codicon-key"></span></button>`;
     h += "</div></div>";
     if (state.apiKeyEditing === p.id) {
-      h += `<div class="editor-card"><label class="field-label">${escHtml(t("API Key for {0}", p.name))}</label><input id="apikey-input" type="password" placeholder="sk-..." />`;
+      h += `<div class="editor-card"><label class="field-label">${escHtml(t("API Key for {0}", p.name))}</label><span class="input-action"><input id="apikey-input" type="password" placeholder="sk-..." /><button class="btn-icon" type="button" data-action="toggle-secret" data-input="apikey-input" title="${t("Show")}"><span class="codicon codicon-eye"></span></button></span>`;
       h += `<div class="btn-row"><button class="btn-primary" data-action="apikey-save" data-id="${escAttr(p.id)}"><span class="codicon codicon-save"></span> ${t("Save")}</button><button class="btn-secondary" data-action="apikey-cancel" title="${t("Cancel")}"><span class="codicon codicon-close"></span></button></div></div>`;
     }
   }
@@ -654,6 +654,19 @@ function handleAction(btn: HTMLElement, parent: HTMLElement, data: ModelsData) {
   const isNew = btn.getAttribute("data-new") === "1";
 
   switch (action) {
+    case "toggle-secret": {
+      const input = document.getElementById(
+        btn.getAttribute("data-input") ?? "",
+      ) as HTMLInputElement | null;
+      if (input) {
+        const reveal = input.type === "password";
+        input.type = reveal ? "text" : "password";
+        const icon = btn.querySelector(".codicon");
+        if (icon) icon.className = "codicon " + (reveal ? "codicon-eye-closed" : "codicon-eye");
+        btn.title = reveal ? t("Hide") : t("Show");
+      }
+      break;
+    }
     case "open-file":
       vscode.postMessage({ type: "openModelsFile" });
       break;

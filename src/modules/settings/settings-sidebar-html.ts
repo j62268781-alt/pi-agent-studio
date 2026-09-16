@@ -1,4 +1,4 @@
-import { getWebviewI18n, t } from "../i18n.ts";
+import { getWebviewI18n, t } from "../../i18n.ts";
 
 export function getSettingsHtml(): string {
   const i18n = getWebviewI18n();

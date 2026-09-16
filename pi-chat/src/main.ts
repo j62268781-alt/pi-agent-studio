@@ -1,6 +1,7 @@
 // pi-chat webview entry point
 import codiconTtf from "@vscode/codicons/dist/codicon.ttf?inline";
 import piLogoSvg from "../../assets/icon.svg?raw";
+import "pi-ui/tokens.css";
 import "./style.css";
 import { setModelIconFns, vscode } from "./globals";
 import { getModelIcon, modelIconHtml, escHtml } from "./model-icons";
@@ -62,16 +63,51 @@ if (ctxRevert) ctxRevert.textContent = t("Revert here");
 // stuck handshake.
 const splash = document.getElementById("boot-splash");
 let splashGone = false;
+let bootFailed = false;
 const bootLogo = document.querySelector(".boot-logo");
 if (bootLogo) bootLogo.innerHTML = piLogoSvg;
 function dismissSplash() {
-  if (splashGone) return;
+  if (splashGone || bootFailed) return;
   splashGone = true;
   if (!splash) return;
   splash.classList.add("is-done");
+  // The element is kept rather than removed: a failed start needs to bring the
+  // splash back for its failure card.
   setTimeout(function () {
-    splash.remove();
+    splash.style.display = "none";
   }, 400);
+}
+
+// The old extension-side loading screen is gone, so this splash is now the only
+// surface for "the session failed to start" — and the retry affordance moved
+// here with it. The host still posts `sessionFailed` and accepts `startSession`.
+const bootCard = document.querySelector(".boot-card");
+const bootError = document.getElementById("boot-error");
+const bootErrorMsg = document.getElementById("boot-error-msg");
+const bootRetry = document.getElementById("boot-retry");
+const bootDots = document.querySelector<HTMLElement>(".boot-dots");
+function showBootFailure(message: string) {
+  bootFailed = true;
+  if (splash) {
+    splash.classList.remove("is-done");
+    splash.style.display = "flex";
+  }
+  // Failure swaps the dots for the message and the retry button.
+  if (bootDots) bootDots.style.display = "none";
+  if (bootCard) bootCard.classList.add("is-failed");
+  if (bootError) bootError.style.display = "flex";
+  if (bootErrorMsg) bootErrorMsg.textContent = message || t("Failed to start the session.");
+}
+if (bootRetry) {
+  bootRetry.textContent = t("Retry");
+  bootRetry.addEventListener("click", function () {
+    bootFailed = false;
+    if (bootCard) bootCard.classList.remove("is-failed");
+    if (bootError) bootError.style.display = "none";
+    if (bootDots) bootDots.style.display = "flex";
+    if (splash) splash.style.opacity = "1";
+    vscode.postMessage({ type: "startSession" });
+  });
 }
 window.addEventListener("message", function (ev) {
   const d = ev.data;
@@ -81,7 +117,9 @@ window.addEventListener("message", function (ev) {
       det.removeAttribute("open");
     });
     dismissSplash();
-  } else if (d.type === "error") {
+  } else if (d.type === "sessionFailed") {
+    showBootFailure(String(d.message || ""));
+  } else if (d.type === "error" && !bootFailed) {
     dismissSplash();
   }
 });

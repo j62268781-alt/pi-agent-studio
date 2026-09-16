@@ -3,7 +3,7 @@ import { ensureSettingsJsonExists } from "./settings-config.ts";
 import { collectStaticEnv, detectPiVersion, detectSystemNodeEnv } from "./settings-env.ts";
 import { isNodeVersionSupported } from "./node-version.ts";
 import { getSettingsHtml } from "./settings-sidebar-html.ts";
-import { t } from "../i18n.ts";
+import { t } from "../../i18n.ts";
 
 const LINK_HOME = "https://pi.dev";
 const LINK_PACKAGES = "https://pi.dev/packages";

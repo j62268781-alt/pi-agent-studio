@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import * as vscode from "vscode";
-import { findPiBinary, normalizePiSpawnTarget } from "../pi.ts";
+import { findPiBinary, normalizePiSpawnTarget } from "../../pi.ts";
 
 const execFileAsync = promisify(execFile);
 

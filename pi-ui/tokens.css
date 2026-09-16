@@ -1,0 +1,216 @@
+/* pi-ui · design tokens
+ *
+ * Single source of truth for colour: Ardot file 726160554760857, board
+ * "Style Spec" (node 2:541), cross-checked against boards A (2:726),
+ * D (2:730), F (2:732), G (2:733).
+ *
+ * Light is the default. Dark engages when VS Code puts `.vscode-dark` on
+ * <body>; `vscode-high-contrast` is folded into dark, while
+ * `vscode-high-contrast-light` deliberately stays light. For local `vite dev`
+ * you can force a theme with <html data-pi-theme="dark">.
+ *
+ * Fonts: the design board specifies "Sarasa Gothic SC", but that is the design
+ * tool's stand-in. Here UI text follows the VS Code font setting and code text
+ * follows the editor font setting, so the webview keeps obeying the user.
+ *
+ * Font SIZES are intentionally absent — they stay owned by `--fs` (pi-settings)
+ * and `--chat-fs` (pi-chat), both driven by the pi-agent-studio.chatFontSize
+ * setting. Do not add a second size scale here.
+ */
+
+:root {
+  /* surfaces */
+  --pi-bg-page: #ffffff;
+  --pi-bg-raised: #ffffff;
+  --pi-bg-surface: #f7f8fa;
+  --pi-bg-subtle: #f2f3f5;
+  --pi-bg-hover: #f2f3f5;
+  --pi-bg-selected: #eaf2ff;
+  --pi-bg-overlay: rgba(0, 0, 0, 0.45);
+
+  /* borders */
+  --pi-border: #e5e7eb;
+  --pi-border-input: #d0d5dd;
+  --pi-border-divider: #edf0f2;
+  --pi-border-brand: #aac7ff;
+
+  /* text */
+  --pi-text: #1f2329;
+  --pi-text-secondary: #6b7280;
+  --pi-text-muted: #9aa0a6;
+  --pi-text-disabled: #b0b5bd;
+  --pi-text-brand: #0052d9;
+  --pi-text-on-solid: #ffffff;
+  --pi-text-success: #2ba471;
+  --pi-text-warning: #e37318;
+  --pi-text-danger: #d14343;
+
+  /* icons */
+  --pi-icon: #4e5969;
+  --pi-icon-muted: #8a9099;
+  --pi-icon-brand: #0052d9;
+  --pi-icon-disabled: #b0b5bd;
+
+  /* brand */
+  --pi-brand: #0052d9;
+  --pi-brand-hover: #0046b8;
+  --pi-brand-active: #003d9e;
+  --pi-brand-soft: #eaf2ff;
+
+  /* semantic */
+  --pi-success: #2ba471;
+  --pi-success-soft: #eaf7f1;
+  --pi-warning: #e37318;
+  --pi-warning-soft: #fef3e6;
+  --pi-danger: #d14343;
+  --pi-danger-soft: #fef2f2;
+  --pi-info: #0052d9;
+  --pi-info-soft: #eaf2ff;
+  --pi-info-soft-border: #d6e8ff;
+
+  /* conversation — board "对话界面" (nodes 2:1 light / 2:108 dark), the only
+   * board that draws the message stream and the composer. */
+  --pi-bg-bubble: #f2f2f5;
+  --pi-bg-pill: #f7f7f9;
+  --pi-bg-think: #f7f7fa;
+  --pi-text-think: #7a828c;
+  --pi-text-flow: #4b5563;
+  --pi-text-tool: #374151;
+  --pi-text-faint: #b0b6bd;
+  --pi-icon-think: #a6aebb;
+  --pi-info-box-bg: #f0f7ff;
+  --pi-info-box-fg: #3b5b86;
+  --pi-danger-pill-border: #f2b8b5;
+
+  /* send button — inverted on purpose, see Style Spec 04/05 */
+  --pi-send-bg: #111418;
+  --pi-send-bg-hover: #2c2f35;
+  --pi-send-bg-active: #0b0d10;
+  --pi-send-bg-disabled: #e5e7eb;
+  --pi-send-fg: #ffffff;
+  --pi-send-fg-disabled: #b0b5bd;
+
+  /* radii */
+  --pi-r-xs: 4px;
+  --pi-r-sm: 6px;
+  --pi-r-md: 8px;
+  --pi-r-lg: 12px;
+  --pi-r-xl: 16px;
+  --pi-r-full: 999px;
+
+  /* spacing */
+  --pi-sp-1: 4px;
+  --pi-sp-2: 6px;
+  --pi-sp-3: 8px;
+  --pi-sp-4: 10px;
+  --pi-sp-5: 12px;
+  --pi-sp-6: 14px;
+  --pi-sp-7: 16px;
+  --pi-sp-8: 20px;
+  --pi-sp-9: 24px;
+  --pi-sp-10: 32px;
+
+  /* control heights */
+  --pi-h-toolbar: 48px;
+  --pi-h-control: 32px;
+  --pi-h-control-lg: 36px;
+  --pi-h-control-sm: 28px;
+  --pi-h-row: 40px;
+
+  /* type families (sizes deliberately excluded, see header) */
+  --pi-font: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  --pi-mono: var(--vscode-editor-font-family, ui-monospace, "SF Mono", Menlo, monospace);
+
+  /* elevation */
+  --pi-shadow-popup: 0 14px 40px -10px rgba(15, 23, 33, 0.1);
+  --pi-shadow-menu: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --pi-shadow-modal: 0 24px 48px rgba(15, 23, 33, 0.18);
+
+  /* code, diff and toast surfaces stay dark in BOTH themes — the boards draw
+   * them on #1F2329 unconditionally, so these are theme-independent. */
+  --pi-code-bg: #1f2329;
+  --pi-code-fg: #c9d1d9;
+  --pi-code-gutter: #6e7681;
+  --pi-code-border: #2c2c38;
+  --pi-code-line: #22262d;
+  --pi-code-added-bg: #0a2e17;
+  --pi-code-added-fg: #c8e6c9;
+  --pi-code-added-gutter: #7ee787;
+  --pi-code-removed-bg: #38141a;
+  --pi-code-removed-fg: #ffb4b0;
+  --pi-code-removed-gutter: #ff9492;
+  --pi-toast-bg: #1f2329;
+  --pi-toast-fg: #ffffff;
+  --pi-toast-info: #5b8ff9;
+  --pi-toast-success: #3fb950;
+  --pi-toast-error: #f0796f;
+  --pi-toast-close: #9aa0a6;
+}
+
+body.vscode-dark,
+body.vscode-high-contrast,
+html[data-pi-theme="dark"] {
+  --pi-bg-page: #1e1e24;
+  --pi-bg-raised: #26262e;
+  --pi-bg-surface: #26262e;
+  --pi-bg-subtle: #2a2a31;
+  --pi-bg-hover: #2a2a31;
+  --pi-bg-selected: #16243a;
+  --pi-bg-overlay: rgba(0, 0, 0, 0.6);
+
+  --pi-border: #2c2c34;
+  --pi-border-input: #2c2c34;
+  --pi-border-divider: #2c2c34;
+  --pi-border-brand: #2d4a7a;
+
+  --pi-text: #e7eaf0;
+  --pi-text-secondary: #9aa0a6;
+  --pi-text-muted: #9aa0a6;
+  --pi-text-disabled: #5a5a63;
+  --pi-text-brand: #5b8ff9;
+  --pi-text-success: #5dcaa5;
+  --pi-text-warning: #ef9f27;
+  --pi-text-danger: #f09595;
+
+  --pi-icon: #8a9099;
+  --pi-icon-brand: #5b8ff9;
+  --pi-icon-disabled: #5a5a63;
+
+  --pi-brand: #5b8ff9;
+  --pi-brand-hover: #7aa5fb;
+  --pi-brand-active: #94b7fc;
+  --pi-brand-soft: #16243a;
+
+  --pi-success: #3fb950;
+  --pi-success-soft: #14291f;
+  --pi-warning: #ef9f27;
+  --pi-warning-soft: #33231a;
+  --pi-danger: #f0796f;
+  --pi-danger-soft: #2e1a1a;
+  --pi-info: #5b8ff9;
+  --pi-info-soft: #16243a;
+  --pi-info-soft-border: #2d4a7a;
+
+  --pi-bg-bubble: #2a2a31;
+  --pi-bg-pill: #2a2a31;
+  --pi-bg-think: #26262e;
+  --pi-text-think: #9aa0a6;
+  --pi-text-flow: #c8ccd4;
+  --pi-text-tool: #c8ccd4;
+  --pi-text-faint: #6b7078;
+  --pi-icon-think: #6b7078;
+  --pi-info-box-bg: #16243a;
+  --pi-info-box-fg: #9db8dc;
+  --pi-danger-pill-border: #5a2a2a;
+
+  --pi-send-bg: #e6e7ea;
+  --pi-send-bg-hover: #ffffff;
+  --pi-send-bg-active: #c8cbd1;
+  --pi-send-bg-disabled: #3a3a42;
+  --pi-send-fg: #1e1e24;
+  --pi-send-fg-disabled: #5a5a63;
+
+  --pi-shadow-popup: 0 14px 40px -10px rgba(0, 0, 0, 0.5);
+  --pi-shadow-menu: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --pi-shadow-modal: 0 24px 48px rgba(0, 0, 0, 0.55);
+}

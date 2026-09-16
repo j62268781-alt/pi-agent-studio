@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { sep } from "node:path";
 import * as vscode from "vscode";
-import type { BridgeConfig } from "../bridge/types.ts";
-import { ensurePiBinary } from "../pi.ts";
+import type { BridgeConfig } from "../../bridge/types.ts";
+import { ensurePiBinary } from "../../pi.ts";
 import { getChatWebviewHtml, resolveChatBackground } from "./chat-webview.ts";
-import { getLocale, t } from "../i18n.ts";
+import { getLocale, t } from "../../i18n.ts";
 import type { ChatTracker } from "./chat-tracker.ts";
 import type { RpcClient } from "./chat-types.ts";
 import {
@@ -14,8 +14,8 @@ import {
   type ChatSession,
   type ChatSessionUpdate,
 } from "./chat-session.ts";
-import { sessionStatusRegistry } from "../session-status-registry.ts";
-import { findPiColumn, findUnusedColumn } from "../webview-columns.ts";
+import { sessionStatusRegistry } from "../../session-status-registry.ts";
+import { findPiColumn, findUnusedColumn } from "../../webview-columns.ts";
 
 export { type ChatSessionUpdate } from "./chat-session.ts";
 

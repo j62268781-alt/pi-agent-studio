@@ -20,7 +20,7 @@ import {
   guessPiPackageManager,
   PI_PACKAGE_MANAGERS,
   type PiPackageManager,
-} from "./upgrade.ts";
+} from "./modules/upgrade.ts";
 
 let piPathCache: string | undefined;
 let piExistsCache: boolean | undefined;

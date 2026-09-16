@@ -5,7 +5,7 @@
 import { relative } from "node:path";
 import { homedir } from "node:os";
 import * as vscode from "vscode";
-import { t } from "../i18n.ts";
+import { t } from "../../i18n.ts";
 
 interface ChatTarget {
   post(msg: unknown): void;

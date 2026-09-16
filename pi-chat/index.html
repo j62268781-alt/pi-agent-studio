@@ -18,19 +18,27 @@
   </head>
   <body>
     <div id="boot-splash">
-      <div class="boot-logo"></div>
-      <div class="boot-dots"><span></span><span></span><span></span></div>
+      <div class="boot-card">
+        <div class="boot-logo"></div>
+        <div class="boot-dots"><span></span><span></span><span></span></div>
+        <div class="boot-error" id="boot-error">
+          <div class="boot-error-msg" id="boot-error-msg"></div>
+          <button id="boot-retry" class="boot-retry" type="button"></button>
+        </div>
+      </div>
     </div>
     <div class="app">
       <div class="toolbar">
+        <!-- Back to the "home" state: starts a fresh session instead of
+             continuing the current one. -->
+        <button id="new-chat-btn" class="icon-btn" type="button">
+          <span class="codicon codicon-add"></span>
+        </button>
         <span class="session-info" id="session-info"></span>
         <input id="name-input" class="name-input" type="text" style="display: none" />
         <span class="status" id="status"></span>
         <button id="name-btn" class="icon-btn" type="button">
           <span class="codicon codicon-edit"></span>
-        </button>
-        <button id="info-btn" class="icon-btn" type="button">
-          <span class="codicon codicon-info"></span>
         </button>
         <button id="refresh-btn" class="icon-btn" type="button">
           <span class="codicon codicon-refresh"></span>
@@ -81,9 +89,41 @@
             <button id="attach-btn" class="icon-btn" type="button">
               <span class="codicon codicon-add"></span>
             </button>
+            <div class="select-wrap model-wrap" id="model-wrap">
+              <button id="model-trigger" class="model-trigger" type="button">
+                <span class="model-icon-slot" id="model-icon"></span>
+                <span class="model-trigger-label" id="model-trigger-label"></span>
+              </button>
+              <div class="model-popup" id="model-popup" style="display: none">
+                <div class="picker-title" id="model-title"></div>
+                <input
+                  id="model-search"
+                  class="model-search"
+                  type="text"
+                  placeholder="Search models…"
+                  autocomplete="off"
+                />
+                <div class="model-list" id="model-list"></div>
+                <!-- Second level. The thinking level used to be its own pill in
+                     the control bar; it lives here now so the bar can keep its
+                     room for the model and permission labels. -->
+                <div class="select-wrap thinking-wrap" id="thinking-wrap">
+                  <button id="thinking-trigger" class="thinking-trigger" type="button">
+                    <span class="codicon codicon-sparkle thinking-icon"></span>
+                    <span class="thinking-row-label" id="thinking-row-label"></span>
+                    <span class="thinking-trigger-label" id="thinking-trigger-label"></span>
+                    <span class="codicon codicon-chevron-right thinking-row-arrow"></span>
+                  </button>
+                  <div class="thinking-popup" id="thinking-popup" style="display: none">
+                    <div class="picker-title" id="thinking-title"></div>
+                    <div class="thinking-list" id="thinking-list"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="select-wrap permission-wrap" id="permission-wrap">
-              <span class="codicon permission-icon" id="permission-icon"></span
-              ><button id="permission-trigger" class="permission-trigger" type="button">
+              <button id="permission-trigger" class="permission-trigger" type="button">
+                <span class="codicon permission-icon" id="permission-icon"></span>
                 <span class="permission-trigger-label" id="permission-trigger-label"></span>
               </button>
               <div class="permission-popup" id="permission-popup" style="display: none">
@@ -104,32 +144,6 @@
                   pathLength="100"
                 ></circle></svg
             ></span>
-            <div class="select-wrap model-wrap" id="model-wrap">
-              <span class="model-icon-slot" id="model-icon"></span
-              ><button id="model-trigger" class="model-trigger" type="button">
-                <span class="model-trigger-label" id="model-trigger-label"></span>
-              </button>
-              <div class="model-popup" id="model-popup" style="display: none">
-                <div class="picker-title" id="model-title"></div>
-                <input
-                  id="model-search"
-                  class="model-search"
-                  type="text"
-                  placeholder="Search models…"
-                  autocomplete="off"
-                />
-                <div class="model-list" id="model-list"></div>
-              </div>
-            </div>
-            <div class="select-wrap thinking-wrap" id="thinking-wrap">
-              <button id="thinking-trigger" class="thinking-trigger" type="button">
-                <span class="thinking-trigger-label" id="thinking-trigger-label"></span>
-              </button>
-              <div class="thinking-popup" id="thinking-popup" style="display: none">
-                <div class="picker-title" id="thinking-title"></div>
-                <div class="thinking-list" id="thinking-list"></div>
-              </div>
-            </div>
             <button id="send" class="icon-btn send-btn" type="button">
               <span class="codicon codicon-send"></span>
             </button>
